@@ -1,9 +1,8 @@
-# 🦜️🔗 LangChain {partner}
+# 🦜️🔗 LangChain Upstage
 
-This repository contains {n} packages with {partner} integrations with LangChain:
+This repository contains 1 package with Upstage integrations with LangChain:
 
-- [langchain-{package}](https://pypi.org/project/langchain-{package}/) integrates [{product}}]({product_link}).
-{- ... if more packages}
+- [langchain-upstage](https://pypi.org/project/langchain-upstage/) integrates [Upstage](https://www.upstage.ai/).
 
 ## Initial Repo Checklist (Remove this section after completing)
 
