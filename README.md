@@ -5,13 +5,6 @@ This repository contains 1 package with Upstage integrations with LangChain:
 - [langchain-upstage](https://pypi.org/project/langchain-upstage/) integrates [Upstage](https://www.upstage.ai/).
 
 ## Initial Repo Checklist (Remove this section after completing)
-
-Workflow code
-
-- [ ] Add secrets as env vars in .github/workflows/_release.yml
-- [ ] Populate .github/workflows/_release.yml with `on.workflow_dispatch.inputs.working-directory.default`
-- [ ] Configure `LIB_DIRS` in .github/scripts/check_diff.py
-
 In github
 
 - [ ] Add integration testing secrets in Github (ask Erick for help)
