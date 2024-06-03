@@ -6,18 +6,6 @@ This repository contains 1 package with Upstage integrations with LangChain:
 
 ## Initial Repo Checklist (Remove this section after completing)
 
-This setup assumes that the partner package is already split. For those instructions,
-see [these docs](https://python.langchain.com/docs/contributing/integrations#partner-packages).
-
-Code
-
-- [ ] Fill out the readme above (for folks that follow pypi link)
-- [ ] Copy package into /libs folder
-- [ ] Update these fields in /libs/*/pyproject.toml
-
-    - `tool.poetry.repository`
-    - `tool.poetry.urls["Source Code"]`
-
 Workflow code
 
 - [ ] Add secrets as env vars in .github/workflows/_release.yml
