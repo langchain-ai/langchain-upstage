@@ -23,3 +23,26 @@ See a [usage example](https://python.langchain.com/docs/integrations/text_embedd
 
 Use `solar-embedding-1-large` model for embeddings. Do not add suffixes such as `-query` or `-passage` to the model name.
 `UpstageEmbeddings` will automatically add the suffixes based on the method called.
+
+## Layout Analysis Loader
+
+See a [usage example](https://python.langchain.com/v0.1/docs/integrations/document_loaders/upstage/)
+
+The `use_ocr` option determines whether OCR will be used for text extraction from documents. If this option is not specified, the default policy of the [Upstage Layout Analysis API](https://developers.upstage.ai/docs/apis/layout-analysis#request-body) service will apply. When `use_ocr` is set to `True`, OCR is utilized to extract text. In the case of PDF documents, this involves converting the PDF into images before performing OCR. Conversely, if `use_ocr` is set to `False` for PDF documents, the text information embedded within the PDF is used directly. However, if the input document is not a PDF, such as an image, setting `use_ocr` to `False` will result in an error.
+
+To load an image using UpstageLayoutAnalysisLoader, OCR must be enabled by setting `use_ocr=True` when constructing the loader, as shown in the example below:
+
+```python
+from langchain_upstage import UpstageLayoutAnalysisLoader
+
+file_path = "/PATH/TO/YOUR/FILE.image"
+layzer = UpstageLayoutAnalysisLoader(file_path, split="page", use_ocr=True)
+
+# For improved memory efficiency, consider using the lazy_load method to load documents page by page.
+docs = layzer.load()  # or layzer.lazy_load()
+
+for doc in docs[:3]:
+    print(doc)
+```
+
+If you are a Windows user, please ensure that the [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) is installed before using the loader.

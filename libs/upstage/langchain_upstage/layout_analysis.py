@@ -94,7 +94,7 @@ class UpstageLayoutAnalysisLoader(BaseLoader):
         output_type: Union[OutputType, dict] = "html",
         split: SplitType = "none",
         api_key: Optional[str] = None,
-        use_ocr: bool = False,
+        use_ocr: Optional[bool] = None,
         exclude: list = ["header", "footer"],
     ):
         """
@@ -112,8 +112,8 @@ class UpstageLayoutAnalysisLoader(BaseLoader):
                                      Defaults to None, in which case it will be
                                      fetched from the environment variable
                                      `UPSTAGE_API_KEY`.
-            use_ocr (bool, optional): Extract text from images in the document.
-                                      Defaults to False. (Use text info in PDF file)
+            use_ocr (bool, optional): Extract text from images in the document with OCR.
+                                      Defaults to None, Use default behavior of the API
             exclude (list, optional): Exclude specific elements from
                                                      the output.
                                                      Defaults to ["header", "footer"].
