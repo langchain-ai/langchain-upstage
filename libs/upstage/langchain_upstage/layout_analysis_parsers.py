@@ -4,11 +4,11 @@ import os
 import warnings
 from typing import Dict, Iterator, List, Literal, Optional, Union
 
-import fitz  # type: ignore
 import requests
-from fitz import Document as fitzDocument
 from langchain_core.document_loaders import BaseBlobParser, Blob
 from langchain_core.documents import Document
+from pypdf import PdfReader, PdfWriter
+from pypdf.errors import PdfReadError
 
 LAYOUT_ANALYSIS_URL = "https://api.upstage.ai/v1/document-ai/layout-analysis"
 
@@ -212,7 +212,7 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
 
     def _split_and_request(
         self,
-        full_docs: fitzDocument,
+        full_docs: PdfReader,
         start_page: int,
         num_pages: int = DEFAULT_NUMBER_OF_PAGE,
     ) -> List:
@@ -221,7 +221,7 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
         server.
 
         Args:
-            full_docs (str): The full document to be split and requested.
+            full_docs (PdfReader): The full document to be split and requested.
             start_page (int): The starting page number for splitting the document.
             num_pages (int, optional): The number of pages to split the document
                                        into.
@@ -230,16 +230,16 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
         Returns:
             response: The response from the server.
         """
-        with fitz.open() as chunk_pdf:
-            chunk_pdf.insert_pdf(
-                full_docs,
-                from_page=start_page,
-                to_page=start_page + num_pages - 1,
-            )
-            pdf_bytes = chunk_pdf.write()
+        merger = PdfWriter()
+        merger.append(
+            full_docs,
+            pages=(start_page, min(start_page + num_pages, full_docs.get_num_pages())),
+        )
 
-        with io.BytesIO(pdf_bytes) as f:
-            response = self._get_response({"document": f})
+        with io.BytesIO() as buffer:
+            merger.write(buffer)
+            buffer.seek(0)
+            response = self._get_response({"document": buffer})
 
         return response
 
@@ -325,11 +325,18 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
         else:
             num_pages = 1
 
-        full_docs = fitz.open(blob.path)
-        number_of_pages = full_docs.page_count
+        try:
+            full_docs = PdfReader(str(blob.path))
+            number_of_pages = full_docs.get_num_pages()
+            is_pdf = True
+        except PdfReadError:
+            number_of_pages = 1
+            is_pdf = False
+        except Exception as e:
+            raise ValueError(f"Failed to read PDF file: {e}")
 
         if self.split == "none":
-            if full_docs.is_pdf:
+            if is_pdf:
                 result = ""
                 start_page = 0
                 num_pages = DEFAULT_NUMBER_OF_PAGE
@@ -362,7 +369,7 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
             )
 
         elif self.split == "element":
-            if full_docs.is_pdf:
+            if is_pdf:
                 start_page = 0
                 for _ in range(number_of_pages):
                     if start_page >= number_of_pages:
@@ -384,7 +391,7 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
                     yield self._element_document(element)
 
         elif self.split == "page":
-            if full_docs.is_pdf:
+            if is_pdf:
                 start_page = 0
                 for _ in range(number_of_pages):
                     if start_page >= number_of_pages:
