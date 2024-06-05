@@ -113,7 +113,8 @@ class UpstageLayoutAnalysisLoader(BaseLoader):
                                      fetched from the environment variable
                                      `UPSTAGE_API_KEY`.
             use_ocr (bool, optional): Extract text from images in the document with OCR.
-                                      Defaults to None, Use default behavior of the API
+                                      Defaults to None, Use default behavior of the
+                                      [Upstage Layout Analysis API](https://developers.upstage.ai/docs/apis/layout-analysis#request-body).
             exclude (list, optional): Exclude specific elements from
                                                      the output.
                                                      Defaults to ["header", "footer"].

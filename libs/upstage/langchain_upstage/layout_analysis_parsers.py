@@ -137,7 +137,8 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
             split (SplitType, optional): The type of splitting to be applied.
                                          Defaults to "none" (no splitting).
             use_ocr (bool, optional): Extract text from images in the document with OCR.
-                                      Defaults to None, Use default behavior of the API
+                                      Defaults to None, Use default behavior of the
+                                      [Upstage Layout Analysis API](https://developers.upstage.ai/docs/apis/layout-analysis#request-body).
             exclude (list, optional): Exclude specific elements from the output.
                                       Defaults to [] (all included).
         """
@@ -244,6 +245,7 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
         Args:
             elements (Dict) : The elements to convert.
             start_page (int): The starting page number for splitting the document.
+                              This number starts from zero.
 
         Returns:
             A list containing a single Document object.
@@ -266,6 +268,7 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
         Args:
             elements (List): A list of elements containing page numbers.
             start_page (int): The starting page number for splitting the document.
+                              This number starts from zero.
 
         Returns:
             List[Document]: A list of Document objects, each representing a page
