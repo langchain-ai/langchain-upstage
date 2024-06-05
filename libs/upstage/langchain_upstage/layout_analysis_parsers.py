@@ -136,10 +136,14 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
                                                              Defaults to "html".
             split (SplitType, optional): The type of splitting to be applied.
                                          Defaults to "none" (no splitting).
-            use_ocr (bool, optional): Extract text from images in the document with OCR.
-                                      The default is None, following the
-                                      [Upstage Layout Analysis API](https://developers.upstage.ai/docs/apis/layout-analysis#request-body)
-                                      is applied.'s standard behavior.
+            use_ocr (bool, optional): Extract text from images in the document using
+                                      OCR. If the value is True, OCR is used to extract
+                                      text from an image. If the value is False, text is
+                                      extracted from a PDF. (An error will occur if the
+                                      value is False and the input is NOT in PDF format)
+                                      The default value is None, and the default
+                                      behavior will be performed based on the API's
+                                      policy if no value is specified. Please check https://developers.upstage.ai/docs/apis/layout-analysis#request-body.
             exclude (list, optional): Exclude specific elements from the output.
                                       Defaults to [] (all included).
         """
