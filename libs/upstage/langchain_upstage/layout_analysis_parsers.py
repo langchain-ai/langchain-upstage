@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import os
 import warnings
 from typing import Dict, Iterator, List, Literal, Optional, Union
@@ -9,6 +10,10 @@ from langchain_core.document_loaders import BaseBlobParser, Blob
 from langchain_core.documents import Document
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
+
+# Disable logging for PyPDF
+logger = logging.getLogger("pypdf")
+logger.setLevel(logging.ERROR)
 
 LAYOUT_ANALYSIS_URL = "https://api.upstage.ai/v1/document-ai/layout-analysis"
 
