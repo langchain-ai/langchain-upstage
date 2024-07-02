@@ -7,15 +7,15 @@ from typing import (
 )
 
 import openai
-from tokenizers import Tokenizer
-from langchain_core.messages import BaseMessage
 from langchain_core.language_models.chat_models import LangSmithParams
+from langchain_core.messages import BaseMessage
 from langchain_core.pydantic_v1 import Field, SecretStr, root_validator
 from langchain_core.utils import (
     convert_to_secret_str,
     get_from_dict_or_env,
 )
 from langchain_openai.chat_models.base import BaseChatOpenAI, _convert_message_to_dict
+from tokenizers import Tokenizer
 
 
 class ChatUpstage(BaseChatOpenAI):
@@ -137,10 +137,13 @@ class ChatUpstage(BaseChatOpenAI):
     def get_num_tokens_from_messages(self, messages: List[BaseMessage]) -> int:
         """Calculate num tokens for solar model."""
         tokenizer = self._get_tokenizer()
-        tokens_per_message = 5 # <|im_start|>{role}\n{message}<|im_end|>
-        tokens_suffix = 3 # <|im_start|>assistant\n
+        tokens_per_message = 5  # <|im_start|>{role}\n{message}<|im_end|>
+        tokens_prefix = 1  # <|startoftext|>
+        tokens_suffix = 3  # <|im_start|>assistant\n
 
         num_tokens = 0
+
+        num_tokens += tokens_prefix
 
         messages_dict = [_convert_message_to_dict(m) for m in messages]
         for message in messages_dict:
@@ -148,7 +151,9 @@ class ChatUpstage(BaseChatOpenAI):
             for key, value in message.items():
                 # Cast str(value) in case the message value is not a string
                 # This occurs with function messages
-                num_tokens += len(tokenizer.encode(str(value), add_special_tokens=False))
+                num_tokens += len(
+                    tokenizer.encode(str(value), add_special_tokens=False)
+                )
         # every reply is primed with <|im_start|>assistant
         num_tokens += tokens_suffix
         return num_tokens
