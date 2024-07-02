@@ -10,11 +10,11 @@ from langchain_upstage import ChatUpstage
 
 
 class TestUpstageStandard(ChatModelUnitTests):
-    @pytest.fixture
+    @property
     def chat_model_class(self) -> Type[BaseChatModel]:
         return ChatUpstage
 
-    @pytest.fixture
+    @property
     def chat_model_params(self) -> dict:
         return {
             "model": "solar-1-mini-chat",
