@@ -16,6 +16,7 @@ langchain-core = ">=0.2.2,<0.3"
 langchain-openai = "^0.1.3"
 pypdf = "^4.2.0"
 requests = "^2.31.0"
+tokenizers = "^0.19.1"
 
 [tool.poetry.group.test]
 optional = true
@@ -38,11 +39,6 @@ optional = true
 
 [tool.poetry.group.codespell.dependencies]
 codespell = "^2.2.0"
-
-[tool.poetry.group.test_integration]
-optional = true
-
-[tool.poetry.group.test_integration.dependencies]
 
 [tool.poetry.group.lint]
 optional = true
