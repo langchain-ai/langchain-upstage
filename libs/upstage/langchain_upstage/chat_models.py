@@ -7,13 +7,15 @@ from typing import (
 )
 
 import openai
+from tokenizers import Tokenizer
+from langchain_core.messages import BaseMessage
 from langchain_core.language_models.chat_models import LangSmithParams
 from langchain_core.pydantic_v1 import Field, SecretStr, root_validator
 from langchain_core.utils import (
     convert_to_secret_str,
     get_from_dict_or_env,
 )
-from langchain_openai.chat_models.base import BaseChatOpenAI
+from langchain_openai.chat_models.base import BaseChatOpenAI, _convert_message_to_dict
 
 
 class ChatUpstage(BaseChatOpenAI):
@@ -78,6 +80,8 @@ class ChatUpstage(BaseChatOpenAI):
     """openai organization is not supported for upstage."""
     tiktoken_model_name: Optional[str] = None
     """tiktoken is not supported for upstage."""
+    tokenizer_name: Optional[str] = "upstage/solar-1-mini-tokenizer"
+    """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-1-mini-tokenizer"""
 
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
@@ -118,3 +122,33 @@ class ChatUpstage(BaseChatOpenAI):
                 **client_params, **async_specific
             ).chat.completions
         return values
+
+    def _get_tokenizer(self) -> Tokenizer:
+        if self.tokenizer_name is None:
+            raise Exception("tokenizer_name should be given.")
+        return Tokenizer.from_pretrained(self.tokenizer_name)
+
+    def get_token_ids(self, text: str) -> List[int]:
+        """Get the tokens present in the text."""
+        tokenizer = self._get_tokenizer()
+        encode = tokenizer.encode(text, add_special_tokens=False)
+        return encode.ids
+
+    def get_num_tokens_from_messages(self, messages: List[BaseMessage]) -> int:
+        """Calculate num tokens for solar model."""
+        tokenizer = self._get_tokenizer()
+        tokens_per_message = 5 # <|im_start|>{role}\n{message}<|im_end|>
+        tokens_suffix = 3 # <|im_start|>assistant\n
+
+        num_tokens = 0
+
+        messages_dict = [_convert_message_to_dict(m) for m in messages]
+        for message in messages_dict:
+            num_tokens += tokens_per_message
+            for key, value in message.items():
+                # Cast str(value) in case the message value is not a string
+                # This occurs with function messages
+                num_tokens += len(tokenizer.encode(str(value), add_special_tokens=False))
+        # every reply is primed with <|im_start|>assistant
+        num_tokens += tokens_suffix
+        return num_tokens
