@@ -192,3 +192,18 @@ def test_upstage_invoke_name(mock_completion: dict) -> None:
         # check return type has name
         assert res.content == "Bab"
         assert res.name == "KimSolar"
+
+
+def test_upstage_tokenizer() -> None:
+    llm = ChatUpstage()
+    llm._get_tokenizer()
+
+    llm = ChatUpstage(tokenizer_name="wrong tokenizer")
+    with pytest.raises(Exception):
+        llm._get_tokenizer()
+
+
+def test_upstage_tokenizer_get_num_tokens() -> None:
+    llm = ChatUpstage()
+    num_tokens = llm.get_num_tokens_from_messages([HumanMessage(content="Hello World")])
+    assert num_tokens == 12
