@@ -26,10 +26,17 @@ jobs:
     secrets: inherit
 
   compile-integration-tests:
-    name: integration test
+    name: compile integration test
     needs: [ build ]
     uses: ./.github/workflows/_compile_integration_test.yml
     secrets: inherit
+  
+  integration_test:
+    name: integration test
+    needs: [ build, compile-integration-tests ]
+    uses: ./.github/workflows/_integration_test.yml
+    secrets: inherit
+
 
   ci_success:
     name: "CI Success"
