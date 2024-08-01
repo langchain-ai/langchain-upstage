@@ -29,18 +29,24 @@ jobs:
     needs: [ build ]
     uses: ./.github/workflows/_test.yml
     secrets: inherit
+    with:
+      working-directory: ${{ inputs.working-directory }}
 
   compile-integration-tests:
     name: compile integration test
     needs: [ build ]
     uses: ./.github/workflows/_compile_integration_test.yml
     secrets: inherit
-  
+    with:
+      working-directory: ${{ inputs.working-directory }}
+ 
   integration_test:
     name: integration test
     needs: [ build ]
     uses: ./.github/workflows/_integration_test.yml
     secrets: inherit
+    with:
+      working-directory: ${{ inputs.working-directory }}
 
 
   ci_success:
