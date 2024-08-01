@@ -37,6 +37,7 @@ jobs:
     uses: ./.github/workflows/_integration_test.yml
     secrets: inherit
 
+
   ci_success:
     name: "CI Success"
     needs: [build, test, compile-integration-tests]
