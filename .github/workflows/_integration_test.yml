@@ -1,6 +1,12 @@
 name: Integration tests
 
 on:
+  workflow_call:
+    inputs:
+      working-directory:
+        required: true
+        type: string
+        description: "From which folder this pipeline executes"
   workflow_dispatch:
     inputs:
       python-version:
