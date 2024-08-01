@@ -33,7 +33,7 @@ jobs:
   
   integration_test:
     name: integration test
-    needs: [ build, compile-integration-tests ]
+    needs: [ build ]
     uses: ./.github/workflows/_integration_test.yml
     secrets: inherit
 
