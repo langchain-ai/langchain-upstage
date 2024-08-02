@@ -7,12 +7,6 @@ on:
         required: true
         type: string
         description: "From which folder this pipeline executes"
-  workflow_dispatch:
-    inputs:
-      python-version:
-        required: true
-        type: string
-        description: "Python version to use"
 
 env:
   POETRY_VERSION: "1.7.1"
