@@ -2,12 +2,15 @@ name: check compatibility
 
 on:
   schedule:
-    - cron: '0 9 * * *'
+    - cron: '0 0 * * *'
   workflow_dispatch:
     inputs:
       working-directory:
         required: true
         default: 'libs/upstage'
+
+env:
+  WORKING_DIRECTORY: ${{ github.event.inputs.working-directory || 'libs/upstage' }}
 
 jobs:
   build:
@@ -24,7 +27,7 @@ jobs:
     uses: ./.github/workflows/_test.yml
     secrets: inherit
     with:
-      working-directory: ${{ inputs.working-directory }}
+      working-directory: ${{ env.WORKING_DIRECTORY }}
 
   compile-integration-tests:
     name: compile integration test
@@ -32,7 +35,7 @@ jobs:
     uses: ./.github/workflows/_compile_integration_test.yml
     secrets: inherit
     with:
-      working-directory: ${{ inputs.working-directory }}
+      working-directory: ${{ env.WORKING_DIRECTORY }}
 
   integration_test:
     name: integration test
@@ -40,7 +43,7 @@ jobs:
     uses: ./.github/workflows/_integration_test.yml
     secrets: inherit
     with:
-      working-directory: ${{ inputs.working-directory }}
+      working-directory: ${{ env.WORKING_DIRECTORY }}
 
   ci_success:
     name: "CI Success"
