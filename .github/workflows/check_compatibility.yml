@@ -3,12 +3,6 @@ name: check compatibility
 on:
   schedule:
     - cron: '0 9 * * *'
-  workflow_call:
-    inputs:
-      working-directory:
-        required: true
-        type: string
-        description: "From which folder this pipeline executes"
   workflow_dispatch:
     inputs:
       working-directory:
