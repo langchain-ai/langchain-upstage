@@ -9,9 +9,6 @@ on:
         required: true
         default: 'libs/upstage'
 
-env:
-  WORKING_DIRECTORY: ${{ github.event.inputs.working-directory || 'libs/upstage' }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,7 +24,7 @@ jobs:
     uses: ./.github/workflows/_test.yml
     secrets: inherit
     with:
-      working-directory: ${{ env.WORKING_DIRECTORY }}
+      working-directory: ${{ github.event.inputs.working-directory || 'libs/upstage' }}
 
   compile-integration-tests:
     name: compile integration test
@@ -35,7 +32,7 @@ jobs:
     uses: ./.github/workflows/_compile_integration_test.yml
     secrets: inherit
     with:
-      working-directory: ${{ env.WORKING_DIRECTORY }}
+      working-directory: ${{ github.event.inputs.working-directory || 'libs/upstage' }}
 
   integration_test:
     name: integration test
@@ -43,7 +40,7 @@ jobs:
     uses: ./.github/workflows/_integration_test.yml
     secrets: inherit
     with:
-      working-directory: ${{ env.WORKING_DIRECTORY }}
+      working-directory: ${{ github.event.inputs.working-directory || 'libs/upstage' }}
 
   ci_success:
     name: "CI Success"
