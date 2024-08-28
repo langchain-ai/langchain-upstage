@@ -4,7 +4,12 @@ from typing import get_args
 import pytest
 
 from langchain_upstage.document_parse import UpstageDocumentParseLoader
-from langchain_upstage.document_parse_parsers import OutputFormat, SplitType
+from langchain_upstage.document_parse_parsers import (
+    OCR,
+    Category,
+    OutputFormat,
+    SplitType,
+)
 
 EXAMPLE_PDF_PATH = Path(__file__).parent.parent / "examples/solar.pdf"
 
@@ -20,12 +25,19 @@ def test_file_not_found_error() -> None:
     except FileNotFoundError:
         assert True
 
+
 @pytest.mark.parametrize("output_format", get_args(OutputFormat))
 @pytest.mark.parametrize("split", get_args(SplitType))
-@pytest.mark.parametrize("ocr", [True, False])
+@pytest.mark.parametrize("ocr", get_args(OCR))
 @pytest.mark.parametrize("coordinates", [True, False])
 @pytest.mark.parametrize("base64_encoding", ["paragraph"])
-def test_document_parse(output_format: OutputFormat, split: SplitType, ocr: bool, coordinates: bool, base64_encoding: bool) -> None:
+def test_document_parse(
+    output_format: OutputFormat,
+    split: SplitType,
+    ocr: OCR,
+    coordinates: bool,
+    base64_encoding: Category,
+) -> None:
     loader = UpstageDocumentParseLoader(
         file_path=EXAMPLE_PDF_PATH,
         output_format=output_format,

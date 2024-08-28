@@ -134,7 +134,8 @@ class UpstageLayoutAnalysisLoader(BaseLoader):
             )
         warnings.warn(
             "UpstageLayoutAnalysisLoader is deprecated."
-            "Please use langchain_upstage.document_parse.UpstageDocumentParseLoader instead."
+            "Please use langchain_upstage.document_parse.UpstageDocumentParseLoader"
+            " instead."
         )
 
         self.api_key = get_from_param_or_env(

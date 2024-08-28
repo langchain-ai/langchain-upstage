@@ -204,7 +204,7 @@ class ChatUpstage(BaseChatOpenAI):
         self._verify_doc_parsing_model(self.model_name, kwargs)
 
         if self.model_name in DOC_PARSING_MODEL and "file_path" in kwargs:
-            document_contents = self._parse_documents(kwargs.pop('file_path'))
+            document_contents = self._parse_documents(kwargs.pop("file_path"))
             messages.append(HumanMessage(document_contents))
 
         if self.streaming:
@@ -227,7 +227,7 @@ class ChatUpstage(BaseChatOpenAI):
         self._verify_doc_parsing_model(self.model_name, kwargs)
 
         if self.model_name in DOC_PARSING_MODEL and "file_path" in kwargs:
-            document_contents = self._parse_documents(kwargs.pop('file_path'))
+            document_contents = self._parse_documents(kwargs.pop("file_path"))
             messages.append(HumanMessage(document_contents))
 
         if self.streaming:
@@ -240,11 +240,14 @@ class ChatUpstage(BaseChatOpenAI):
         params = {**params, **kwargs}
         response = await self.async_client.create(messages=message_dicts, **params)
         return self._create_chat_result(response)
-    
-    def _verify_doc_parsing_model(self, model_name: str, kwargs: Dict[str, Any]) -> bool:
+
+    def _verify_doc_parsing_model(
+        self, model_name: str, kwargs: Dict[str, Any]
+    ) -> bool:
         if model_name not in DOC_PARSING_MODEL and "file_path" in kwargs:
             raise ValueError("file_path is not supported for this model.")
-    
+        return True
+
     def _parse_documents(self, file_path: str) -> str:
         document_contents = ""
 
@@ -263,7 +266,8 @@ class ChatUpstage(BaseChatOpenAI):
         *,
         include_raw: Literal[True] = True,
         **kwargs: Any,
-    ) -> Runnable[LanguageModelInput, _AllReturnType]: ...
+    ) -> Runnable[LanguageModelInput, _AllReturnType]:
+        ...
 
     @overload
     def with_structured_output(
@@ -272,7 +276,8 @@ class ChatUpstage(BaseChatOpenAI):
         *,
         include_raw: Literal[False] = False,
         **kwargs: Any,
-    ) -> Runnable[LanguageModelInput, _DictOrPydantic]: ...
+    ) -> Runnable[LanguageModelInput, _DictOrPydantic]:
+        ...
 
     def with_structured_output(
         self,

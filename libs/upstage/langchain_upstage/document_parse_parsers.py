@@ -2,7 +2,7 @@ import io
 import json
 import logging
 import os
-from typing import Dict, Iterator, List, Literal, Optional
+from typing import Any, Dict, Iterator, List, Literal, Optional
 
 import requests
 from langchain_core.document_loaders import BaseBlobParser, Blob
@@ -19,7 +19,7 @@ DEFAULT_NUM_PAGES = 10
 DOCUMENT_PARSE_DEFAULT_MODEL = "document-parse-240910"
 
 OutputFormat = Literal["text", "html", "markdown"]
-OCRMode = Literal["auto", "force"]
+OCR = Literal["auto", "force"]
 SplitType = Literal["none", "page", "element"]
 Category = Literal[
     "paragraph",
@@ -101,12 +101,12 @@ class UpstageDocumentParseParser(BaseBlobParser):
     def __init__(
         self,
         api_key: Optional[str] = None,
-        base_url: Optional[str] = DOCUMENT_PARSE_BASE_URL,
+        base_url: str = DOCUMENT_PARSE_BASE_URL,
         model: str = DOCUMENT_PARSE_DEFAULT_MODEL,
         split: SplitType = "none",
-        ocr: OCRMode = "auto",
-        output_format: OutputFormat = "text",
-        coordinates: bool = False,
+        ocr: OCR = "auto",
+        output_format: OutputFormat = "html",
+        coordinates: bool = True,
         base64_encoding: List[Category] = [],
     ):
         """
@@ -122,16 +122,16 @@ class UpstageDocumentParseParser(BaseBlobParser):
                          Defaults to "document-parse".
             split (SplitType, optional): The type of splitting to be applied.
                                          Defaults to "none" (no splitting).
-            ocr (OCRMode, optional): Extract text from images in the document using
-                                      OCR. If the value is "force", OCR is used to extract
-                                      text from an image. If the value is "auto", text is
-                                      extracted from a PDF. (An error will occur if the
-                                      value is "auto" and the input is NOT in PDF format)
+            ocr (OCRMode, optional): Extract text from images in the document using OCR.
+                                     If the value is "force", OCR is used to extract
+                                     text from an image. If the value is "auto", text is
+                                     extracted from a PDF. (An error will occur if the
+                                     value is "auto" and the input is NOT in PDF format)
             output_format (OutputFormat, optional): Format of the inference results.
             coordinates (bool, optional): Whether to include the coordinates of the
-                                      OCR in the output.
-            base64_encoding (List[Category], optional): The category of the elements to be
-                                                        encoded in base64.
+                                          OCR in the output.
+            base64_encoding (List[Category], optional): The category of the elements to
+                                                        be encoded in base64.
 
 
         """
@@ -166,7 +166,10 @@ class UpstageDocumentParseParser(BaseBlobParser):
             ValueError: If there is an error in the API call.
         """
         try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "X-Upstage-Document-Parse": "true",
+            }
             response = requests.post(
                 self.base_url,
                 headers=headers,
@@ -176,7 +179,6 @@ class UpstageDocumentParseParser(BaseBlobParser):
                     "model": self.model,
                     "output_formats": f"['{self.output_format}']",
                     "coordinates": self.coordinates,
-                    "la-v1": "true",
                     "base64_encoding": f"{self.base64_encoding}",
                 },
             )
@@ -281,17 +283,25 @@ class UpstageDocumentParseParser(BaseBlobParser):
             page_content = " ".join(
                 [parse_output(element, self.output_format) for element in group]
             )
-            
+
             metadata = {
                 "page": group[0]["page"] + start_page,
             }
 
             if self.base64_encoding:
-                base64_encodings = [element.get("base64_encoding") for element in group if element.get("base64_encoding") is not None]
+                base64_encodings = [
+                    element.get("base64_encoding")
+                    for element in group
+                    if element.get("base64_encoding") is not None
+                ]
                 metadata["base64_encodings"] = base64_encodings
-            
+
             if self.coordinates:
-                coordinates = [element.get("coordinates") for element in group if element.get("coordinates") is not None]
+                coordinates = [
+                    element.get("coordinates")
+                    for element in group
+                    if element.get("coordinates") is not None
+                ]
                 metadata["coordinates"] = coordinates
 
             _docs.append(
@@ -356,9 +366,9 @@ class UpstageDocumentParseParser(BaseBlobParser):
                             if base64_encoding is not None:
                                 base64_encodings.append(base64_encoding)
                         if self.coordinates:
-                            coordinates = element.get("coordinates")
-                            if coordinates is not None:
-                                coordinates.append(coordinates)
+                            coordinate = element.get("coordinates")
+                            if coordinate is not None:
+                                coordinates.append(coordinate)
 
                     start_page += num_pages
 
@@ -372,15 +382,18 @@ class UpstageDocumentParseParser(BaseBlobParser):
                 for element in elements:
                     result += parse_output(element, self.output_format)
 
-                    if self.base64_encoding and element.get("base64_encoding") is not None:
+                    if (
+                        self.base64_encoding
+                        and element.get("base64_encoding") is not None
+                    ):
                         base64_encoding = element.get("base64_encoding")
                         if base64_encoding is not None:
                             base64_encodings.append(base64_encoding)
                     if self.coordinates and element.get("coordinates") is not None:
-                        coordinates = element.get("coordinates")
-                        if coordinates is not None:
-                            coordinates.append(coordinates)
-            metadata = {
+                        coordinate = element.get("coordinates")
+                        if coordinate is not None:
+                            coordinates.append(coordinate)
+            metadata: Dict[str, Any] = {
                 "total_pages": number_of_pages,
             }
             if self.coordinates:
@@ -431,7 +444,7 @@ class UpstageDocumentParseParser(BaseBlobParser):
                     raise ValueError("Blob path is required for non-PDF files.")
                 with open(blob.path, "rb") as f:
                     elements = self._get_response({"document": f})
-                
+
                 yield from self._page_document(elements)
 
         else:

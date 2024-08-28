@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from tokenize import Octnumber
 from typing import Any, Dict, get_args
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock, patch
@@ -10,28 +9,29 @@ import requests
 
 from langchain_upstage.document_parse import UpstageDocumentParseLoader
 from langchain_upstage.document_parse_parsers import (
+    OCR,
     Category,
-    OCRMode,
     OutputFormat,
     SplitType,
 )
 
 MOCK_RESPONSE_JSON: Dict[str, Any] = {
-    "api": "1.0",
-    "model": "layout-analyzer-0.1.0",
-    "elements": [{
-        "id": 0,
-        "coordinates": {
-            "x": 74,
-            "y": 906,
-        },
-        "category": "header",
-        "content": {
-            "html": "arXiv:2103.15348v2",
-            "markdown": "arXiv:2103.15348v2",
-            "text": "arXiv:2103.15348v2",
-        },
-        "page": 1,
+    "api": "2.0",
+    "model": "document-parse-1.0.0",
+    "elements": [
+        {
+            "id": 0,
+            "coordinates": {
+                "x": 0.123,
+                "y": 0.321,
+            },
+            "category": "header",
+            "content": {
+                "html": "arXiv:2103.15348v2",
+                "markdown": "arXiv:2103.15348v2",
+                "text": "arXiv:2103.15348v2",
+            },
+            "page": 1,
             "base64_encoding": "string",
         },
     ],
@@ -55,13 +55,13 @@ def test_initialization() -> None:
 
 @pytest.mark.parametrize("output_format", get_args(OutputFormat))
 @pytest.mark.parametrize("split", get_args(SplitType))
-@pytest.mark.parametrize("ocr", get_args(OCRMode))
+@pytest.mark.parametrize("ocr", get_args(OCR))
 @pytest.mark.parametrize("coordinates", [True, False])
 @pytest.mark.parametrize("base64_encoding", ["header"])
 def test_document_parse_param(
     output_format: OutputFormat,
     split: SplitType,
-    ocr: OCRMode,
+    ocr: OCR,
     coordinates: bool,
     base64_encoding: Category,
 ) -> None:
@@ -96,7 +96,11 @@ def test_document_parse_output(
     documents = loader.load()
 
     assert len(documents) == 1
-    assert documents[0].page_content == MOCK_RESPONSE_JSON["elements"][0]["content"][output_format]
+    assert (
+        documents[0].page_content
+        == MOCK_RESPONSE_JSON["elements"][0]["content"][output_format]
+    )
+
 
 @patch("requests.post")
 def test_request_exception(mock_post: Mock) -> None:
@@ -113,7 +117,8 @@ def test_request_exception(mock_post: Mock) -> None:
         loader.load()
 
     assert "Failed to send request: Mocked request exception" == str(context.exception)
-    
+
+
 @patch("requests.post")
 def test_json_decode_error(mock_post: Mock) -> None:
     mock_response = Mock()

@@ -159,7 +159,9 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
             )
         warnings.warn(
             "UpstageLayoutAnalysisParser is deprecated."
-            "Please use langchain_upstage.document_parse_parsers.UpstageDocumentParseParser instead."
+            "Please use"
+            " langchain_upstage.document_parse_parsers.UpstageDocumentParseParser"
+            " instead."
         )
 
         self.api_key = get_from_param_or_env(
