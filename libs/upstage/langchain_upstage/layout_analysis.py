@@ -132,6 +132,10 @@ class UpstageLayoutAnalysisLoader(BaseLoader):
                 "UPSTAGE_DOCUMENT_AI_API_KEY is deprecated."
                 "Please use UPSTAGE_API_KEY instead."
             )
+        warnings.warn(
+            "UpstageLayoutAnalysisLoader is deprecated."
+            "Please use langchain_upstage.document_parse.UpstageDocumentParseLoader instead."
+        )
 
         self.api_key = get_from_param_or_env(
             "UPSTAGE_API_KEY", api_key, "UPSTAGE_API_KEY", deprecated_key
