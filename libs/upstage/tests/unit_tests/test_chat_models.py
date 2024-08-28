@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -17,6 +18,7 @@ from langchain_openai.chat_models.base import (
 
 from langchain_upstage import ChatUpstage
 
+EXAMPLE_PDF_PATH = Path(__file__).parent.parent / "examples/solar.pdf"
 
 def test_initialization() -> None:
     """Test chat model initialization."""
@@ -144,6 +146,26 @@ def test_upstage_invoke(mock_completion: dict) -> None:
         assert res.content == "Bab"
     assert completed
 
+def test_upstage_invoke_with_doc_parsing_model(mock_completion: dict) -> None:
+    # TODO: update model_name
+    llm = ChatUpstage(model_name="solar-1-pro-preview")
+    mock_client = MagicMock()
+    completed = False
+
+    def mock_create(*args: Any, **kwargs: Any) -> Any:
+        nonlocal completed
+        completed = True
+        return mock_completion
+
+    mock_client.create = mock_create
+    with patch.object(
+        llm,
+        "client",
+        mock_client,
+    ), patch("langchain_upstage.chat_models.UpstageDocumentParseLoader.load", return_value=[MagicMock(page_content="test")]):
+        res = llm.invoke("bab", file_path=EXAMPLE_PDF_PATH)
+        assert res.content == "Bab"
+    assert completed
 
 async def test_upstage_ainvoke(mock_completion: dict) -> None:
     llm = ChatUpstage()
@@ -165,6 +187,26 @@ async def test_upstage_ainvoke(mock_completion: dict) -> None:
         assert res.content == "Bab"
     assert completed
 
+async def test_upstage_ainvoke_with_doc_parsing_model(mock_completion: dict) -> None:
+    # TODO: update model_name
+    llm = ChatUpstage(model_name="solar-1-pro-preview")
+    mock_client = AsyncMock()
+    completed = False
+
+    async def mock_create(*args: Any, **kwargs: Any) -> Any:
+        nonlocal completed
+        completed = True
+        return mock_completion
+
+    mock_client.create = mock_create
+    with patch.object(
+        llm,
+        "async_client",
+        mock_client,
+    ), patch("langchain_upstage.chat_models.UpstageDocumentParseLoader.load", return_value=[MagicMock(page_content="test")]):
+        res = await llm.ainvoke("bab", file_path=EXAMPLE_PDF_PATH)
+        assert res.content == "Bab"
+    assert completed
 
 def test_upstage_invoke_name(mock_completion: dict) -> None:
     llm = ChatUpstage()

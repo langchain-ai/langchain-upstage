@@ -14,14 +14,23 @@ from typing import (
 )
 
 import openai
+from langchain_core.callbacks import (
+    AsyncCallbackManagerForLLMRun,
+    CallbackManagerForLLMRun,
+)
 from langchain_core.language_models import LanguageModelInput
-from langchain_core.language_models.chat_models import LangSmithParams
-from langchain_core.messages import BaseMessage
+from langchain_core.language_models.chat_models import (
+    LangSmithParams,
+    agenerate_from_stream,
+    generate_from_stream,
+)
+from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_core.output_parsers.base import OutputParserLike
 from langchain_core.output_parsers.openai_tools import (
     JsonOutputKeyToolsParser,
     PydanticToolsParser,
 )
+from langchain_core.outputs import ChatResult
 from langchain_core.pydantic_v1 import BaseModel, Field, SecretStr, root_validator
 from langchain_core.runnables import Runnable, RunnableMap, RunnablePassthrough
 from langchain_core.tools import BaseTool
@@ -39,6 +48,10 @@ from langchain_openai.chat_models.base import (
     _is_pydantic_class,
 )
 from tokenizers import Tokenizer
+
+from langchain_upstage.document_parse import UpstageDocumentParseLoader
+
+DOC_PARSING_MODEL = ["solar-1-pro-preview"]
 
 
 class ChatUpstage(BaseChatOpenAI):
@@ -181,6 +194,67 @@ class ChatUpstage(BaseChatOpenAI):
         num_tokens += tokens_suffix
         return num_tokens
 
+    def _generate(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> ChatResult:
+        self._verify_doc_parsing_model(self.model_name, kwargs)
+
+        if self.model_name in DOC_PARSING_MODEL and "file_path" in kwargs:
+            document_contents = self._parse_documents(kwargs.pop('file_path'))
+            messages.append(HumanMessage(document_contents))
+
+        if self.streaming:
+            stream_iter = self._stream(
+                messages, stop=stop, run_manager=run_manager, **kwargs
+            )
+            return generate_from_stream(stream_iter)
+        message_dicts, params = self._create_message_dicts(messages, stop)
+        params = {**params, **kwargs}
+        response = self.client.create(messages=message_dicts, **params)
+        return self._create_chat_result(response)
+
+    async def _agenerate(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[AsyncCallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> ChatResult:
+        self._verify_doc_parsing_model(self.model_name, kwargs)
+
+        if self.model_name in DOC_PARSING_MODEL and "file_path" in kwargs:
+            document_contents = self._parse_documents(kwargs.pop('file_path'))
+            messages.append(HumanMessage(document_contents))
+
+        if self.streaming:
+            stream_iter = self._astream(
+                messages, stop=stop, run_manager=run_manager, **kwargs
+            )
+            return await agenerate_from_stream(stream_iter)
+
+        message_dicts, params = self._create_message_dicts(messages, stop)
+        params = {**params, **kwargs}
+        response = await self.async_client.create(messages=message_dicts, **params)
+        return self._create_chat_result(response)
+    
+    def _verify_doc_parsing_model(self, model_name: str, kwargs: Dict[str, Any]) -> bool:
+        if model_name not in DOC_PARSING_MODEL and "file_path" in kwargs:
+            raise ValueError("file_path is not supported for this model.")
+    
+    def _parse_documents(self, file_path: str) -> str:
+        document_contents = ""
+
+        loader = UpstageDocumentParseLoader(file_path=file_path, output_format="text")
+        docs = loader.load()
+
+        for doc in docs:
+            document_contents += f"{doc.page_content}\n"
+        return document_contents
+
     # TODO: Fix typing.
     @overload  # type: ignore[override]
     def with_structured_output(
@@ -189,8 +263,7 @@ class ChatUpstage(BaseChatOpenAI):
         *,
         include_raw: Literal[True] = True,
         **kwargs: Any,
-    ) -> Runnable[LanguageModelInput, _AllReturnType]:
-        ...
+    ) -> Runnable[LanguageModelInput, _AllReturnType]: ...
 
     @overload
     def with_structured_output(
@@ -199,8 +272,7 @@ class ChatUpstage(BaseChatOpenAI):
         *,
         include_raw: Literal[False] = False,
         **kwargs: Any,
-    ) -> Runnable[LanguageModelInput, _DictOrPydantic]:
-        ...
+    ) -> Runnable[LanguageModelInput, _DictOrPydantic]: ...
 
     def with_structured_output(
         self,
