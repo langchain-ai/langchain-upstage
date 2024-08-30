@@ -16,7 +16,7 @@ logger.setLevel(logging.ERROR)
 DOCUMENT_PARSE_BASE_URL = "http://internal-person-perso-6cecuyeTFiOU-1722602311.ap-northeast-2.elb.amazonaws.com:8080/inference"
 # DOCUMENT_PARSE_BASE_URL = "https://api.upstage.ai/v1/document-ai/layout-analysis"
 DEFAULT_NUM_PAGES = 10
-DOCUMENT_PARSE_DEFAULT_MODEL = "document-parse-240910"
+DOCUMENT_PARSE_DEFAULT_MODEL = "document-parse"
 
 OutputFormat = Literal["text", "html", "markdown"]
 OCR = Literal["auto", "force"]
@@ -148,8 +148,6 @@ class UpstageDocumentParseParser(BaseBlobParser):
         self.output_format = output_format
         self.coordinates = coordinates
         self.base64_encoding = base64_encoding
-        print("MODEL", self.model)
-        print("URL", self.base_url)
 
     def _get_response(self, files: Dict) -> List:
         """

@@ -51,7 +51,7 @@ from tokenizers import Tokenizer
 
 from langchain_upstage.document_parse import UpstageDocumentParseLoader
 
-DOC_PARSING_MODEL = ["solar-1-pro-preview"]
+DOC_PARSING_MODEL = ["solar-pro"]
 
 
 class ChatUpstage(BaseChatOpenAI):
@@ -64,7 +64,6 @@ class ChatUpstage(BaseChatOpenAI):
         .. code-block:: python
 
             from langchain_upstage import ChatUpstage
-
 
             model = ChatUpstage()
     """
@@ -201,9 +200,9 @@ class ChatUpstage(BaseChatOpenAI):
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> ChatResult:
-        self._verify_doc_parsing_model(self.model_name, kwargs)
+        using_doc_parsing_model = self._using_doc_parsing_model(kwargs)
 
-        if self.model_name in DOC_PARSING_MODEL and "file_path" in kwargs:
+        if using_doc_parsing_model:
             document_contents = self._parse_documents(kwargs.pop("file_path"))
             messages.append(HumanMessage(document_contents))
 
@@ -224,9 +223,9 @@ class ChatUpstage(BaseChatOpenAI):
         run_manager: Optional[AsyncCallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> ChatResult:
-        self._verify_doc_parsing_model(self.model_name, kwargs)
+        using_doc_parsing_model = self._using_doc_parsing_model(kwargs)
 
-        if self.model_name in DOC_PARSING_MODEL and "file_path" in kwargs:
+        if using_doc_parsing_model:
             document_contents = self._parse_documents(kwargs.pop("file_path"))
             messages.append(HumanMessage(document_contents))
 
@@ -241,12 +240,12 @@ class ChatUpstage(BaseChatOpenAI):
         response = await self.async_client.create(messages=message_dicts, **params)
         return self._create_chat_result(response)
 
-    def _verify_doc_parsing_model(
-        self, model_name: str, kwargs: Dict[str, Any]
-    ) -> bool:
-        if model_name not in DOC_PARSING_MODEL and "file_path" in kwargs:
+    def _using_doc_parsing_model(self, kwargs: Dict[str, Any]) -> bool:
+        if "file_path" in kwargs:
+            if self.model_name in DOC_PARSING_MODEL:
+                return True
             raise ValueError("file_path is not supported for this model.")
-        return True
+        return False
 
     def _parse_documents(self, file_path: str) -> str:
         document_contents = ""
