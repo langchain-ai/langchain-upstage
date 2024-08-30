@@ -150,7 +150,7 @@ def test_upstage_invoke(mock_completion: dict) -> None:
 
 def test_upstage_invoke_with_doc_parsing_model(mock_completion: dict) -> None:
     # TODO: update model_name
-    llm = ChatUpstage(model_name="solar-1-pro-preview")
+    llm = ChatUpstage(model_name="solar-pro")
     mock_client = MagicMock()
     completed = False
 
@@ -196,7 +196,7 @@ async def test_upstage_ainvoke(mock_completion: dict) -> None:
 
 async def test_upstage_ainvoke_with_doc_parsing_model(mock_completion: dict) -> None:
     # TODO: update model_name
-    llm = ChatUpstage(model_name="solar-1-pro-preview")
+    llm = ChatUpstage(model_name="solar-pro")
     mock_client = AsyncMock()
     completed = False
 
