@@ -13,8 +13,7 @@ from pypdf.errors import PdfReadError
 logger = logging.getLogger("pypdf")
 logger.setLevel(logging.ERROR)
 
-DOCUMENT_PARSE_BASE_URL = "http://internal-person-perso-6cecuyeTFiOU-1722602311.ap-northeast-2.elb.amazonaws.com:8080/inference"
-# DOCUMENT_PARSE_BASE_URL = "https://api.upstage.ai/v1/document-ai/layout-analysis"
+DOCUMENT_PARSE_BASE_URL = "https://api.upstage.ai/v1/document-ai/document-parse"
 DEFAULT_NUM_PAGES = 10
 DOCUMENT_PARSE_DEFAULT_MODEL = "document-parse"
 
@@ -166,7 +165,6 @@ class UpstageDocumentParseParser(BaseBlobParser):
         try:
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
-                "X-Upstage-Document-Parse": "true",
             }
             response = requests.post(
                 self.base_url,
