@@ -252,13 +252,19 @@ class ChatUpstage(BaseChatOpenAI):
         return False
 
     def _parse_documents(self, file_path: str) -> str:
-        document_contents = ""
+        document_contents = "Documents:\n"
 
-        loader = UpstageDocumentParseLoader(file_path=file_path, output_format="text")
+        loader = UpstageDocumentParseLoader(file_path=file_path, output_format="text", coordinates=False)
         docs = loader.load()
 
-        for doc in docs:
-            document_contents += f"{doc.page_content}\n"
+        if isinstance(file_path, list):
+            file_titles = [os.path.basename(path) for path in file_path]
+        else:
+            file_titles = [os.path.basename(file_path)]
+
+        for i, doc in enumerate(docs):
+            file_title = file_titles[min(i, len(file_titles) - 1)]
+            document_contents += f"{file_title}:\n{doc.page_content}\n\n"
         return document_contents
 
     # TODO: Fix typing.
