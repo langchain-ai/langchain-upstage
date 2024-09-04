@@ -254,7 +254,9 @@ class ChatUpstage(BaseChatOpenAI):
     def _parse_documents(self, file_path: str) -> str:
         document_contents = "Documents:\n"
 
-        loader = UpstageDocumentParseLoader(file_path=file_path, output_format="text", coordinates=False)
+        loader = UpstageDocumentParseLoader(
+            file_path=file_path, output_format="text", coordinates=False
+        )
         docs = loader.load()
 
         if isinstance(file_path, list):

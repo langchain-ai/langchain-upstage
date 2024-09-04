@@ -251,6 +251,7 @@ def test_upstage_tokenizer() -> None:
     llm = ChatUpstage(model="solar-1-mini-chat")
     llm._get_tokenizer()
 
+
 def test_upstage_tokenizer_get_num_tokens() -> None:
     llm = ChatUpstage(model="solar-1-mini-chat")
     num_tokens = llm.get_num_tokens_from_messages([HumanMessage(content="Hello World")])
