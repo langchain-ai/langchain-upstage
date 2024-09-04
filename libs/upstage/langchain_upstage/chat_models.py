@@ -14,14 +14,23 @@ from typing import (
 )
 
 import openai
+from langchain_core.callbacks import (
+    AsyncCallbackManagerForLLMRun,
+    CallbackManagerForLLMRun,
+)
 from langchain_core.language_models import LanguageModelInput
-from langchain_core.language_models.chat_models import LangSmithParams
-from langchain_core.messages import BaseMessage
+from langchain_core.language_models.chat_models import (
+    LangSmithParams,
+    agenerate_from_stream,
+    generate_from_stream,
+)
+from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_core.output_parsers.base import OutputParserLike
 from langchain_core.output_parsers.openai_tools import (
     JsonOutputKeyToolsParser,
     PydanticToolsParser,
 )
+from langchain_core.outputs import ChatResult
 from langchain_core.pydantic_v1 import BaseModel, Field, SecretStr, root_validator
 from langchain_core.runnables import Runnable, RunnableMap, RunnablePassthrough
 from langchain_core.tools import BaseTool
@@ -40,6 +49,15 @@ from langchain_openai.chat_models.base import (
 )
 from tokenizers import Tokenizer
 
+from langchain_upstage.document_parse import UpstageDocumentParseLoader
+
+DOC_PARSING_MODEL = ["solar-pro"]
+SOLAR_TOKENIZERS = {
+    "solar-pro": "upstage/solar-pro-preview-tokenizer",
+    "solar-1-mini-chat": "upstage/solar-1-mini-tokenizer",
+    "solar-docvision": "upstage/solar-docvision-preview-tokenizer",
+}
+
 
 class ChatUpstage(BaseChatOpenAI):
     """ChatUpstage chat model.
@@ -51,7 +69,6 @@ class ChatUpstage(BaseChatOpenAI):
         .. code-block:: python
 
             from langchain_upstage import ChatUpstage
-
 
             model = ChatUpstage()
     """
@@ -86,7 +103,7 @@ class ChatUpstage(BaseChatOpenAI):
         params["ls_provider"] = "upstage"
         return params
 
-    model_name: str = Field(default="solar-1-mini-chat", alias="model")
+    model_name: str = Field(default="solar-pro", alias="model")
     """Model name to use."""
     upstage_api_key: Optional[SecretStr] = Field(default=None, alias="api_key")
     """Automatically inferred from env are `UPSTAGE_API_KEY` if not provided."""
@@ -103,8 +120,8 @@ class ChatUpstage(BaseChatOpenAI):
     """openai organization is not supported for upstage."""
     tiktoken_model_name: Optional[str] = None
     """tiktoken is not supported for upstage."""
-    tokenizer_name: Optional[str] = "upstage/solar-1-mini-tokenizer"
-    """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-1-mini-tokenizer"""
+    tokenizer_name: Optional[str] = "upstage/solar-pro-preview-tokenizer"
+    """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-preview-tokenizer"""
 
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
@@ -147,8 +164,7 @@ class ChatUpstage(BaseChatOpenAI):
         return values
 
     def _get_tokenizer(self) -> Tokenizer:
-        if self.tokenizer_name is None:
-            raise Exception("tokenizer_name should be given.")
+        self.tokenizer_name = SOLAR_TOKENIZERS.get(self.model_name, self.tokenizer_name)
         return Tokenizer.from_pretrained(self.tokenizer_name)
 
     def get_token_ids(self, text: str) -> List[int]:
@@ -180,6 +196,78 @@ class ChatUpstage(BaseChatOpenAI):
         # every reply is primed with <|im_start|>assistant
         num_tokens += tokens_suffix
         return num_tokens
+
+    def _generate(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> ChatResult:
+        using_doc_parsing_model = self._using_doc_parsing_model(kwargs)
+
+        if using_doc_parsing_model:
+            document_contents = self._parse_documents(kwargs.pop("file_path"))
+            messages.append(HumanMessage(document_contents))
+
+        if self.streaming:
+            stream_iter = self._stream(
+                messages, stop=stop, run_manager=run_manager, **kwargs
+            )
+            return generate_from_stream(stream_iter)
+        message_dicts, params = self._create_message_dicts(messages, stop)
+        params = {**params, **kwargs}
+        response = self.client.create(messages=message_dicts, **params)
+        return self._create_chat_result(response)
+
+    async def _agenerate(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[AsyncCallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> ChatResult:
+        using_doc_parsing_model = self._using_doc_parsing_model(kwargs)
+
+        if using_doc_parsing_model:
+            document_contents = self._parse_documents(kwargs.pop("file_path"))
+            messages.append(HumanMessage(document_contents))
+
+        if self.streaming:
+            stream_iter = self._astream(
+                messages, stop=stop, run_manager=run_manager, **kwargs
+            )
+            return await agenerate_from_stream(stream_iter)
+
+        message_dicts, params = self._create_message_dicts(messages, stop)
+        params = {**params, **kwargs}
+        response = await self.async_client.create(messages=message_dicts, **params)
+        return self._create_chat_result(response)
+
+    def _using_doc_parsing_model(self, kwargs: Dict[str, Any]) -> bool:
+        if "file_path" in kwargs:
+            if self.model_name in DOC_PARSING_MODEL:
+                return True
+            raise ValueError("file_path is not supported for this model.")
+        return False
+
+    def _parse_documents(self, file_path: str) -> str:
+        document_contents = "Documents:\n"
+
+        loader = UpstageDocumentParseLoader(
+            file_path=file_path, output_format="text", coordinates=False
+        )
+        docs = loader.load()
+
+        if isinstance(file_path, list):
+            file_titles = [os.path.basename(path) for path in file_path]
+        else:
+            file_titles = [os.path.basename(file_path)]
+
+        for i, doc in enumerate(docs):
+            file_title = file_titles[min(i, len(file_titles) - 1)]
+            document_contents += f"{file_title}:\n{doc.page_content}\n\n"
+        return document_contents
 
     # TODO: Fix typing.
     @overload  # type: ignore[override]

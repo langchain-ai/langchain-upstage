@@ -2,8 +2,7 @@ import io
 import json
 import logging
 import os
-import warnings
-from typing import Dict, Iterator, List, Literal, Optional, Union
+from typing import Any, Dict, Iterator, List, Literal, Optional
 
 import requests
 from langchain_core.document_loaders import BaseBlobParser, Blob
@@ -11,56 +10,39 @@ from langchain_core.documents import Document
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
 
-# Disable logging for PyPDF
 logger = logging.getLogger("pypdf")
 logger.setLevel(logging.ERROR)
 
-LAYOUT_ANALYSIS_URL = "https://api.upstage.ai/v1/document-ai/layout-analysis"
+DOCUMENT_PARSE_BASE_URL = "https://api.upstage.ai/v1/document-ai/document-parse"
+DEFAULT_NUM_PAGES = 10
+DOCUMENT_PARSE_DEFAULT_MODEL = "document-parse"
 
-DEFAULT_NUMBER_OF_PAGE = 10
-
-OutputType = Literal["text", "html"]
-SplitType = Literal["none", "element", "page"]
-
-
-def validate_api_key(api_key: str) -> None:
-    """
-    Validates the provided API key.
-
-    Args:
-        api_key (str): The API key to be validated.
-
-    Raises:
-        ValueError: If the API key is empty or None.
-
-    Returns:
-        None
-    """
-    if not api_key:
-        raise ValueError("API Key is required for Upstage Document Loader")
+OutputFormat = Literal["text", "html", "markdown"]
+OCR = Literal["auto", "force"]
+SplitType = Literal["none", "page", "element"]
+Category = Literal[
+    "paragraph",
+    "table",
+    "figure",
+    "header",
+    "footer",
+    "caption",
+    "equation",
+    "heading1",
+    "list",
+    "index",
+    "footnote",
+    "chart",
+]
 
 
-def validate_file_path(file_path: str) -> None:
-    """
-    Validates if a file exists at the given file path.
-
-    Args:
-        file_path (str): The path to the file.
-
-    Raises:
-        FileNotFoundError: If the file does not exist at the given file path.
-    """
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File not found: {file_path}")
-
-
-def parse_output(data: dict, output_type: Union[OutputType, dict]) -> str:
+def parse_output(data: dict, output_format: OutputFormat) -> str:
     """
     Parse the output data based on the specified output type.
 
     Args:
         data (dict): The data to be parsed.
-        output_type (Union[OutputType, dict]): The output type to parse the element data
+        output_format (OutputFormat): The output format to parse the element data
                                                into.
 
     Returns:
@@ -69,20 +51,15 @@ def parse_output(data: dict, output_type: Union[OutputType, dict]) -> str:
     Raises:
         ValueError: If the output type is invalid.
     """
-    if isinstance(output_type, dict):
-        if data["category"] in output_type:
-            return data[output_type[data["category"]]]
-        else:
-            return data["text"]
-    elif isinstance(output_type, str):
-        if output_type == "text":
-            return data["text"]
-        elif output_type == "html":
-            return data["html"]
-        else:
-            raise ValueError(f"Invalid output type: {output_type}")
+    content = data["content"]
+    if output_format == "text":
+        return content["text"]
+    elif output_format == "html":
+        return content["html"]
+    elif output_format == "markdown":
+        return content["markdown"]
     else:
-        raise ValueError(f"Invalid output type: {output_type}")
+        raise ValueError(f"Invalid output type: {output_format}")
 
 
 def get_from_param_or_env(
@@ -106,8 +83,8 @@ def get_from_param_or_env(
         )
 
 
-class UpstageLayoutAnalysisParser(BaseBlobParser):
-    """Upstage Layout Analysis Parser.
+class UpstageDocumentParseParser(BaseBlobParser):
+    """Upstage Document Parse Parser.
 
     To use, you should have the environment variable `UPSTAGE_API_KEY`
     set with your API key or pass it as a named parameter to the constructor.
@@ -115,18 +92,21 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
     Example:
         .. code-block:: python
 
-            from langchain_upstage import UpstageLayoutAnalysisParser
+            from langchain_upstage import UpstageDocumentParseParser
 
-            loader = UpstageLayoutAnalysisParser(split="page", output_type="text")
+            loader = UpstageDocumentParseParser(split="page", output_format="text")
     """
 
     def __init__(
         self,
         api_key: Optional[str] = None,
-        output_type: Union[OutputType, dict] = "html",
+        base_url: str = DOCUMENT_PARSE_BASE_URL,
+        model: str = DOCUMENT_PARSE_DEFAULT_MODEL,
         split: SplitType = "none",
-        use_ocr: Optional[bool] = None,
-        exclude: list = [],
+        ocr: OCR = "auto",
+        output_format: OutputFormat = "html",
+        coordinates: bool = True,
+        base64_encoding: List[Category] = [],
     ):
         """
         Initializes an instance of the Upstage class.
@@ -136,44 +116,37 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
                                      Defaults to None, in which case it will be
                                      fetched from the environment variable
                                      `UPSTAGE_API_KEY`.
-            output_type (Union[OutputType, dict], optional): The type of output to be
-                                                             generated by the parser.
-                                                             Defaults to "html".
+            base_url (str, optional): The base URL for accessing the Upstage API.
+            model (str): The model to be used for the document parse.
+                         Defaults to "document-parse".
             split (SplitType, optional): The type of splitting to be applied.
                                          Defaults to "none" (no splitting).
-            use_ocr (bool, optional): Extract text from images in the document using
-                                      OCR. If the value is True, OCR is used to extract
-                                      text from an image. If the value is False, text is
-                                      extracted from a PDF. (An error will occur if the
-                                      value is False and the input is NOT in PDF format)
-                                      The default value is None, and the default
-                                      behavior will be performed based on the API's
-                                      policy if no value is specified. Please check https://developers.upstage.ai/docs/apis/layout-analysis#request-body.
-            exclude (list, optional): Exclude specific elements from the output.
-                                      Defaults to [] (all included).
+            ocr (OCRMode, optional): Extract text from images in the document using OCR.
+                                     If the value is "force", OCR is used to extract
+                                     text from an image. If the value is "auto", text is
+                                     extracted from a PDF. (An error will occur if the
+                                     value is "auto" and the input is NOT in PDF format)
+            output_format (OutputFormat, optional): Format of the inference results.
+            coordinates (bool, optional): Whether to include the coordinates of the
+                                          OCR in the output.
+            base64_encoding (List[Category], optional): The category of the elements to
+                                                        be encoded in base64.
+
+
         """
-        if deprecated_key := os.environ.get("UPSTAGE_DOCUMENT_AI_API_KEY"):
-            warnings.warn(
-                "UPSTAGE_DOCUMENT_AI_API_KEY is deprecated."
-                "Please use UPSTAGE_API_KEY instead."
-            )
-        warnings.warn(
-            "UpstageLayoutAnalysisParser is deprecated."
-            "Please use"
-            " langchain_upstage.document_parse_parsers.UpstageDocumentParseParser"
-            " instead."
-        )
-
         self.api_key = get_from_param_or_env(
-            "UPSTAGE_API_KEY", api_key, "UPSTAGE_API_KEY", deprecated_key
+            "UPSTAGE_API_KEY",
+            api_key,
+            "UPSTAGE_API_KEY",
+            os.environ.get("UPSTAGE_API_KEY"),
         )
-
-        self.output_type = output_type
+        self.base_url = base_url
+        self.model = model
         self.split = split
-        self.use_ocr = use_ocr
-        self.exclude = exclude
-
-        validate_api_key(self.api_key)
+        self.ocr = ocr
+        self.output_format = output_format
+        self.coordinates = coordinates
+        self.base64_encoding = base64_encoding
 
     def _get_response(self, files: Dict) -> List:
         """
@@ -190,43 +163,41 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
             ValueError: If there is an error in the API call.
         """
         try:
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-            if self.use_ocr is not None:
-                options = {"ocr": self.use_ocr}
-                response = requests.post(
-                    LAYOUT_ANALYSIS_URL, headers=headers, files=files, data=options
-                )
-            else:
-                response = requests.post(
-                    LAYOUT_ANALYSIS_URL, headers=headers, files=files
-                )
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+            }
+            response = requests.post(
+                self.base_url,
+                headers=headers,
+                files=files,
+                data={
+                    "ocr": self.ocr,
+                    "model": self.model,
+                    "output_formats": f"['{self.output_format}']",
+                    "coordinates": self.coordinates,
+                    "base64_encoding": f"{self.base64_encoding}",
+                },
+            )
             response.raise_for_status()
-
             result = response.json().get("elements", [])
-
-            elements = [
-                element for element in result if element["category"] not in self.exclude
-            ]
-
-            return elements
-
-        except requests.RequestException as req_err:
+            return result
+        except requests.HTTPError as e:
+            raise ValueError(f"HTTP error: {e.response.text}")
+        except requests.RequestException as e:
             # Handle any request-related exceptions
-            raise ValueError(f"Failed to send request: {req_err}")
-        except json.JSONDecodeError as json_err:
+            raise ValueError(f"Failed to send request: {e}")
+        except json.JSONDecodeError as e:
             # Handle JSON decode errors
-            raise ValueError(f"Failed to decode JSON response: {json_err}")
-        except Exception as err:
+            raise ValueError(f"Failed to decode JSON response: {e}")
+        except Exception as e:
             # Handle any other exceptions
-            raise ValueError(f"An error occurred: {err}")
-
-        return []
+            raise ValueError(f"An error occurred: {e}")
 
     def _split_and_request(
         self,
         full_docs: PdfReader,
         start_page: int,
-        num_pages: int = DEFAULT_NUMBER_OF_PAGE,
+        num_pages: int = DEFAULT_NUM_PAGES,
     ) -> List:
         """
         Splits the full pdf document into partial pages and sends a request to the
@@ -268,14 +239,20 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
             A list containing a single Document object.
 
         """
+        metadata = {
+            "id": elements["id"],
+            "page": elements["page"] + start_page,
+            "category": elements["category"],
+        }
+
+        if self.coordinates and elements.get("coordinates"):
+            metadata["coordinates"] = elements.get("coordinates")
+        if self.base64_encoding and elements.get("base64_encoding"):
+            metadata["base64_encoding"] = elements.get("base64_encoding")
+
         return Document(
-            page_content=(parse_output(elements, self.output_type)),
-            metadata={
-                "page": elements["page"] + start_page,
-                "id": elements["id"],
-                "bounding_box": json.dumps(elements["bounding_box"]),
-                "category": elements["category"],
-            },
+            page_content=(parse_output(elements, self.output_format)),
+            metadata=metadata,
         )
 
     def _page_document(self, elements: List, start_page: int = 0) -> List[Document]:
@@ -300,15 +277,33 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
 
         for group in page_group:
             page_content = " ".join(
-                [parse_output(element, self.output_type) for element in group]
+                [parse_output(element, self.output_format) for element in group]
             )
+
+            metadata = {
+                "page": group[0]["page"] + start_page,
+            }
+
+            if self.base64_encoding:
+                base64_encodings = [
+                    element.get("base64_encoding")
+                    for element in group
+                    if element.get("base64_encoding") is not None
+                ]
+                metadata["base64_encodings"] = base64_encodings
+
+            if self.coordinates:
+                coordinates = [
+                    element.get("coordinates")
+                    for element in group
+                    if element.get("coordinates") is not None
+                ]
+                metadata["coordinates"] = coordinates
 
             _docs.append(
                 Document(
                     page_content=page_content,
-                    metadata={
-                        "page": group[0]["page"] + start_page,
-                    },
+                    metadata=metadata,
                 )
             )
 
@@ -333,7 +328,7 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
         """
 
         if is_batch:
-            num_pages = DEFAULT_NUMBER_OF_PAGE
+            num_pages = DEFAULT_NUM_PAGES
         else:
             num_pages = 1
 
@@ -348,17 +343,28 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
             raise ValueError(f"Failed to read PDF file: {e}")
 
         if self.split == "none":
+            result = ""
+            base64_encodings = []
+            coordinates = []
+
             if is_pdf:
-                result = ""
                 start_page = 0
-                num_pages = DEFAULT_NUMBER_OF_PAGE
+                num_pages = DEFAULT_NUM_PAGES
                 for _ in range(number_of_pages):
                     if start_page >= number_of_pages:
                         break
 
                     elements = self._split_and_request(full_docs, start_page, num_pages)
                     for element in elements:
-                        result += parse_output(element, self.output_type)
+                        result += parse_output(element, self.output_format)
+                        if self.base64_encoding:
+                            base64_encoding = element.get("base64_encoding")
+                            if base64_encoding is not None:
+                                base64_encodings.append(base64_encoding)
+                        if self.coordinates:
+                            coordinate = element.get("coordinates")
+                            if coordinate is not None:
+                                coordinates.append(coordinate)
 
                     start_page += num_pages
 
@@ -366,18 +372,34 @@ class UpstageLayoutAnalysisParser(BaseBlobParser):
                 if not blob.path:
                     raise ValueError("Blob path is required for non-PDF files.")
 
-                result = ""
                 with open(blob.path, "rb") as f:
                     elements = self._get_response({"document": f})
 
                 for element in elements:
-                    result += parse_output(element, self.output_type)
+                    result += parse_output(element, self.output_format)
+
+                    if (
+                        self.base64_encoding
+                        and element.get("base64_encoding") is not None
+                    ):
+                        base64_encoding = element.get("base64_encoding")
+                        if base64_encoding is not None:
+                            base64_encodings.append(base64_encoding)
+                    if self.coordinates and element.get("coordinates") is not None:
+                        coordinate = element.get("coordinates")
+                        if coordinate is not None:
+                            coordinates.append(coordinate)
+            metadata: Dict[str, Any] = {
+                "total_pages": number_of_pages,
+            }
+            if self.coordinates:
+                metadata["coordinates"] = coordinates
+            if self.base64_encoding:
+                metadata["base64_encodings"] = base64_encodings
 
             yield Document(
                 page_content=result,
-                metadata={
-                    "total_pages": number_of_pages,
-                },
+                metadata=metadata,
             )
 
         elif self.split == "element":
