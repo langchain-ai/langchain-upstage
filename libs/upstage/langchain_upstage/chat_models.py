@@ -52,6 +52,11 @@ from tokenizers import Tokenizer
 from langchain_upstage.document_parse import UpstageDocumentParseLoader
 
 DOC_PARSING_MODEL = ["solar-pro"]
+SOLAR_TOKENIZERS = {
+    "solar-pro": "upstage/solar-pro-preview-tokenizer",
+    "solar-1-mini-chat": "upstage/solar-1-mini-tokenizer",
+    "solar-docvision": "upstage/solar-docvision-preview-tokenizer",
+}
 
 
 class ChatUpstage(BaseChatOpenAI):
@@ -115,8 +120,8 @@ class ChatUpstage(BaseChatOpenAI):
     """openai organization is not supported for upstage."""
     tiktoken_model_name: Optional[str] = None
     """tiktoken is not supported for upstage."""
-    tokenizer_name: Optional[str] = "upstage/solar-1-mini-tokenizer"
-    """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-1-mini-tokenizer"""
+    tokenizer_name: Optional[str] = "upstage/solar-pro-preview-tokenizer"
+    """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-preview-tokenizer"""
 
     @root_validator()
     def validate_environment(cls, values: Dict) -> Dict:
@@ -159,8 +164,7 @@ class ChatUpstage(BaseChatOpenAI):
         return values
 
     def _get_tokenizer(self) -> Tokenizer:
-        if self.tokenizer_name is None:
-            raise Exception("tokenizer_name should be given.")
+        self.tokenizer_name = SOLAR_TOKENIZERS.get(self.model_name, self.tokenizer_name)
         return Tokenizer.from_pretrained(self.tokenizer_name)
 
     def get_token_ids(self, text: str) -> List[int]:
