@@ -2,21 +2,21 @@
 
 from typing import Tuple, Type
 
-from langchain_core.language_models import BaseChatModel
-from langchain_standard_tests.unit_tests import ChatModelUnitTests
+from langchain_core.embeddings import Embeddings
+from langchain_standard_tests.unit_tests.embeddings import EmbeddingsUnitTests
 
-from langchain_upstage import ChatUpstage
+from langchain_upstage import UpstageEmbeddings
 
 
-class TestUpstageStandard(ChatModelUnitTests):
+class TestUpstageStandard(EmbeddingsUnitTests):
     @property
-    def chat_model_class(self) -> Type[BaseChatModel]:
-        return ChatUpstage
+    def embeddings_class(self) -> Type[Embeddings]:
+        return UpstageEmbeddings
 
     @property
-    def chat_model_params(self) -> dict:
+    def embedding_model_params(self) -> dict:
         return {
-            "model": "solar-1-mini-chat",
+            "model": "solar-embedding-1-large",
         }
 
     @property
@@ -26,7 +26,9 @@ class TestUpstageStandard(ChatModelUnitTests):
                 "UPSTAGE_API_KEY": "api_key",
                 "UPSTAGE_API_BASE": "https://base.com",
             },
-            {},
+            {
+                "model": "solar-embedding-1-large",
+            },
             {
                 "upstage_api_key": "api_key",
                 "upstage_api_base": "https://base.com",

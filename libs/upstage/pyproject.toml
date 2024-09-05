@@ -11,13 +11,13 @@ license = "MIT"
 "Source Code" = "https://github.com/langchain-ai/langchain-upstage/tree/main/libs/upstage"
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4.0"
-langchain-core = ">=0.2.2,<0.3"
-langchain-openai = "^0.1.3"
+python = ">=3.9,<4.0"
 pypdf = "^4.2.0"
 requests = "^2.31.0"
 tokenizers = "^0.19.1"
 pydantic = "^2.8.0"
+langchain-openai = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/partners/openai", branch = "v0.3rc" }
+langchain-core = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/core", branch = "v0.3rc" }
 
 [tool.poetry.group.test]
 optional = true
@@ -32,10 +32,8 @@ pytest-mock = "^3.10.0"
 syrupy = "^4.0.2"
 pytest-watcher = "^0.3.4"
 pytest-asyncio = "^0.21.1"
-langchain-openai = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/partners/openai" }
-langchain-core = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/core" }
 docarray = "^0.32.1"
-langchain-standard-tests = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/standard-tests" }
+langchain-standard-tests = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/standard-tests", branch = "v0.3rc" }
 
 [tool.poetry.group.codespell]
 optional = true
@@ -50,9 +48,8 @@ optional = true
 ruff = "^0.1.5"
 
 [tool.poetry.group.typing.dependencies]
-mypy = "^0.991"
+mypy = "^1.11"
 types-requests = ">=2.31.0"
-langchain-core = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/core" }
 
 [tool.poetry.group.test_integration.dependencies]
 httpx = "^0.27.0"
@@ -71,7 +68,6 @@ python = ">=3.12"
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-langchain-core = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/core" }
 
 [tool.ruff.lint]
 select = [

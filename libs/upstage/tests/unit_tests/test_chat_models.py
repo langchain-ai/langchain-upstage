@@ -29,7 +29,7 @@ def test_initialization() -> None:
 def test_upstage_model_param() -> None:
     llm = ChatUpstage(model="foo")
     assert llm.model_name == "foo"
-    llm = ChatUpstage(model_name="foo")
+    llm = ChatUpstage(model_name="foo")  # type: ignore
     assert llm.model_name == "foo"
     ls_params = llm._get_ls_params()
     assert ls_params["ls_provider"] == "upstage"
@@ -150,7 +150,7 @@ def test_upstage_invoke(mock_completion: dict) -> None:
 
 def test_upstage_invoke_with_doc_parsing_model(mock_completion: dict) -> None:
     # TODO: update model_name
-    llm = ChatUpstage(model_name="solar-pro")
+    llm = ChatUpstage(model="solar-pro")
     mock_client = MagicMock()
     completed = False
 
@@ -196,7 +196,7 @@ async def test_upstage_ainvoke(mock_completion: dict) -> None:
 
 async def test_upstage_ainvoke_with_doc_parsing_model(mock_completion: dict) -> None:
     # TODO: update model_name
-    llm = ChatUpstage(model_name="solar-pro")
+    llm = ChatUpstage(model="solar-pro")
     mock_client = AsyncMock()
     completed = False
 
@@ -256,3 +256,27 @@ def test_upstage_tokenizer_get_num_tokens() -> None:
     llm = ChatUpstage(model="solar-1-mini-chat")
     num_tokens = llm.get_num_tokens_from_messages([HumanMessage(content="Hello World")])
     assert num_tokens == 12
+
+
+def test_chat_upstage_extra_kwargs() -> None:
+    """Test extra kwargs to chat upstage."""
+    # Check that foo is saved in extra_kwargs.
+    llm = ChatUpstage(foo=3, max_tokens=10)  # type: ignore
+    assert llm.max_tokens == 10
+    assert llm.model_kwargs == {"foo": 3}
+
+    # Test that if extra_kwargs are provided, they are added to it.
+    llm = ChatUpstage(foo=3, model_kwargs={"bar": 2})  # type: ignore
+    assert llm.model_kwargs == {"foo": 3, "bar": 2}
+
+    # Test that if provided twice it errors
+    with pytest.raises(ValueError):
+        ChatUpstage(foo=3, model_kwargs={"foo": 2})  # type: ignore
+
+    # Test that if explicit param is specified in kwargs it errors
+    with pytest.raises(ValueError):
+        ChatUpstage(model_kwargs={"temperature": 0.2})
+
+    # Test that "model" cannot be specified in kwargs
+    with pytest.raises(ValueError):
+        ChatUpstage(model_kwargs={"model": "solar-1-mini-chat"})
