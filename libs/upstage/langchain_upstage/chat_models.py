@@ -252,7 +252,9 @@ class ChatUpstage(BaseChatOpenAI):
         document_contents = "Documents:\n"
 
         loader = UpstageDocumentParseLoader(
-            api_key=self.upstage_api_key.get_secret_value(),
+            api_key=self.upstage_api_key.get_secret_value()
+            if self.upstage_api_key
+            else None,
             file_path=file_path,
             output_format="text",
             coordinates=False,
