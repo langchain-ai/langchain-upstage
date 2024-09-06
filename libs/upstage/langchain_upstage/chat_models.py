@@ -8,6 +8,7 @@ from typing import (
     Literal,
     Optional,
     Sequence,
+    Tuple,
     Type,
     Union,
     overload,
@@ -193,6 +194,15 @@ class ChatUpstage(BaseChatOpenAI):
         # every reply is primed with <|im_start|>assistant
         num_tokens += tokens_suffix
         return num_tokens
+
+    def _create_message_dicts(
+        self, messages: List[BaseMessage], stop: Optional[List[str]]
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        params = self._default_params
+        if stop is not None:
+            params["stop"] = stop
+        message_dicts = [_convert_message_to_dict(m) for m in messages]
+        return message_dicts, params
 
     def _generate(
         self,
