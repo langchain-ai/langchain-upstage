@@ -542,19 +542,24 @@ subdirectory = "libs/core"
 
 [[package]]
 name = "langchain-openai"
-version = "0.1.13"
+version = "0.1.23"
 description = "An integration package connecting OpenAI and LangChain"
 optional = false
-python-versions = "<4.0,>=3.8.1"
-files = [
-    {file = "langchain_openai-0.1.13-py3-none-any.whl", hash = "sha256:4344b6c5c67088a28eed80ba763157fdd1d690cee679966a021b42f305dbf7b5"},
-    {file = "langchain_openai-0.1.13.tar.gz", hash = "sha256:03318669bcb3238f7d1bb043329f91d150ca09246f1faf569ef299f535405c71"},
-]
+python-versions = ">=3.8.1,<4.0"
+files = []
+develop = false
 
 [package.dependencies]
-langchain-core = ">=0.2.2,<0.3"
-openai = ">=1.32.0,<2.0.0"
+langchain-core = "^0.2.35"
+openai = "^1.40.0"
 tiktoken = ">=0.7,<1"
+
+[package.source]
+type = "git"
+url = "https://github.com/langchain-ai/langchain.git"
+reference = "HEAD"
+resolved_reference = "de97d5064437c98f34dae0b0afa3b61162790726"
+subdirectory = "libs/partners/openai"
 
 [[package]]
 name = "langchain-standard-tests"
@@ -1819,4 +1824,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "ace6136b6a409bbcf10bfc850e74a062c7213990460e0a98180f6c47afdeab7b"
+content-hash = "a626225e934bcda530985ed058ee4d2a0d220f3efd1ee95541a019eeaf349e8a"
