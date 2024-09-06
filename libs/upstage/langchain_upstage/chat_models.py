@@ -161,8 +161,7 @@ class ChatUpstage(BaseChatOpenAI):
         return values
 
     def _get_tokenizer(self) -> Tokenizer:
-        self.tokenizer_name = SOLAR_TOKENIZERS.get(
-            self.model_name, self.tokenizer_name)
+        self.tokenizer_name = SOLAR_TOKENIZERS.get(self.model_name, self.tokenizer_name)
         return Tokenizer.from_pretrained(self.tokenizer_name)
 
     def get_token_ids(self, text: str) -> List[int]:
@@ -254,7 +253,9 @@ class ChatUpstage(BaseChatOpenAI):
 
         loader = UpstageDocumentParseLoader(
             api_key=self.upstage_api_key.get_secret_value(),
-            file_path=file_path, output_format="text", coordinates=False
+            file_path=file_path,
+            output_format="text",
+            coordinates=False,
         )
         docs = loader.load()
 
