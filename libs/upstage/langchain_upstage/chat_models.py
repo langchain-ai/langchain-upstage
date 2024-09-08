@@ -101,7 +101,7 @@ class ChatUpstage(BaseChatOpenAI):
         params["ls_provider"] = "upstage"
         return params
 
-    model_name: str = Field(default="solar-pro", alias="model")
+    model_name: str = Field(default="solar-1-mini-chat", alias="model")
     """Model name to use."""
     upstage_api_key: Optional[SecretStr] = Field(default=None, alias="api_key")
     """Automatically inferred from env are `UPSTAGE_API_KEY` if not provided."""
