@@ -1,5 +1,5 @@
 import os
-from typing import Any, List, Literal, Optional, Type, Union
+from typing import Any, List, Literal, Optional, Type, Union, cast
 
 from langchain_core._api.deprecation import deprecated
 from langchain_core.callbacks import (
@@ -10,7 +10,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import BaseTool
 from langchain_core.utils import convert_to_secret_str
-from pydantic import BaseModel, Field, PrivateAttr, SecretStr
+from pydantic import BaseModel, Field, SecretStr
 
 from langchain_upstage import ChatUpstage
 
@@ -52,7 +52,7 @@ class UpstageGroundednessCheck(BaseTool):
         "the assistant's message is grounded in the provided context."
     )
     upstage_api_key: Optional[SecretStr] = Field(default=None, alias="api_key")
-    api_wrapper: ChatUpstage = PrivateAttr
+    api_wrapper: Optional[ChatUpstage] = None
 
     args_schema: Type[BaseModel] = UpstageGroundednessCheckInput
 
@@ -89,7 +89,8 @@ class UpstageGroundednessCheck(BaseTool):
         """Use the tool."""
         if isinstance(context, List):
             context = self.formatDocumentsAsString(context)
-        response = self.api_wrapper.invoke(
+        api_wrapper = cast(ChatUpstage, self.api_wrapper)
+        response = api_wrapper.invoke(
             [HumanMessage(context), AIMessage(answer)], stream=False
         )
         return str(response.content)
@@ -102,7 +103,8 @@ class UpstageGroundednessCheck(BaseTool):
     ) -> Union[str, Literal["grounded", "notGrounded", "notSure"]]:
         if isinstance(context, List):
             context = self.formatDocumentsAsString(context)
-        response = await self.api_wrapper.ainvoke(
+        api_wrapper = cast(ChatUpstage, self.api_wrapper)
+        response = await api_wrapper.ainvoke(
             [HumanMessage(context), AIMessage(answer)], stream=False
         )
         return str(response.content)

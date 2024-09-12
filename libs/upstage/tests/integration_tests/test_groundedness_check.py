@@ -16,7 +16,7 @@ def test_langchain_upstage_groundedness_check_deprecated() -> None:
 
     api_key = os.environ.get("UPSTAGE_API_KEY", None)
 
-    tool = GroundednessCheck(api_key=api_key)
+    tool = GroundednessCheck(api_key=api_key)  # type: ignore[arg-type]
     output = tool.invoke({"context": "foo bar", "answer": "bar foo"})
 
     assert output in ["grounded", "notGrounded", "notSure"]

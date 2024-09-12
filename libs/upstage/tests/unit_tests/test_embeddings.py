@@ -23,7 +23,7 @@ def test_upstage_invalid_model_kwargs() -> None:
 
 def test_upstage_invalid_model() -> None:
     with pytest.raises(ValueError):
-        UpstageEmbeddings()
+        UpstageEmbeddings()  # type: ignore[call-arg]
 
 
 def test_upstage_incorrect_field() -> None:
