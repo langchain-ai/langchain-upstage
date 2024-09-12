@@ -126,6 +126,7 @@ class UpstageEmbeddings(BaseModel, Embeddings):
     model_config = ConfigDict(
         extra="forbid",
         populate_by_name=True,
+        protected_namespaces=(),
     )
 
     @model_validator(mode="before")
