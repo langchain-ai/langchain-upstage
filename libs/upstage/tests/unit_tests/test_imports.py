@@ -2,11 +2,13 @@ from langchain_upstage import __all__
 
 EXPECTED_ALL = [
     "ChatUpstage",
-    "GroundednessCheck",
     "UpstageEmbeddings",
     "UpstageLayoutAnalysisLoader",
+    "UpstageDocumentParseLoader",
+    "UpstageDocumentParseParser",
     "UpstageLayoutAnalysisParser",
     "UpstageGroundednessCheck",
+    "GroundednessCheck",
 ]
 
 

@@ -10,6 +10,7 @@ from typing import (
     Literal,
     Optional,
     Sequence,
+    Tuple,
     Type,
     Union,
     cast,
@@ -104,7 +105,7 @@ class ChatUpstage(BaseChatOpenAI):
         params["ls_provider"] = "upstage"
         return params
 
-    model_name: str = Field(default="solar-pro", alias="model")
+    model_name: str = Field(default="solar-1-mini-chat", alias="model")
     """Model name to use."""
     upstage_api_key: SecretStr = Field(
         default_factory=secret_from_env(
@@ -204,6 +205,15 @@ class ChatUpstage(BaseChatOpenAI):
         num_tokens += tokens_suffix
         return num_tokens
 
+    def _create_message_dicts(
+        self, messages: List[BaseMessage], stop: Optional[List[str]]
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        params = self._default_params
+        if stop is not None:
+            params["stop"] = stop
+        message_dicts = [_convert_message_to_dict(m) for m in messages]
+        return message_dicts, params
+
     def _generate(
         self,
         messages: List[BaseMessage],
@@ -260,7 +270,12 @@ class ChatUpstage(BaseChatOpenAI):
         document_contents = "Documents:\n"
 
         loader = UpstageDocumentParseLoader(
-            file_path=file_path, output_format="text", coordinates=False
+            api_key=self.upstage_api_key.get_secret_value()
+            if self.upstage_api_key
+            else None,
+            file_path=file_path,
+            output_format="text",
+            coordinates=False,
         )
         docs = loader.load()
 

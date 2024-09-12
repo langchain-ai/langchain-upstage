@@ -1,4 +1,6 @@
 from langchain_upstage.chat_models import ChatUpstage
+from langchain_upstage.document_parse import UpstageDocumentParseLoader
+from langchain_upstage.document_parse_parsers import UpstageDocumentParseParser
 from langchain_upstage.embeddings import UpstageEmbeddings
 from langchain_upstage.layout_analysis import UpstageLayoutAnalysisLoader
 from langchain_upstage.layout_analysis_parsers import UpstageLayoutAnalysisParser
@@ -11,6 +13,8 @@ __all__ = [
     "ChatUpstage",
     "UpstageEmbeddings",
     "UpstageLayoutAnalysisLoader",
+    "UpstageDocumentParseLoader",
+    "UpstageDocumentParseParser",
     "UpstageLayoutAnalysisParser",
     "UpstageGroundednessCheck",
     "GroundednessCheck",
