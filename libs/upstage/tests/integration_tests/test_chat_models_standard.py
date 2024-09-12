@@ -9,7 +9,6 @@ from langchain_standard_tests.integration_tests import ChatModelIntegrationTests
 from langchain_upstage import ChatUpstage
 
 
-@pytest.mark.skip("fix after following openai spec")
 class TestUpstageStandard(ChatModelIntegrationTests):
     @property
     def chat_model_class(self) -> Type[BaseChatModel]:
@@ -20,3 +19,7 @@ class TestUpstageStandard(ChatModelIntegrationTests):
         return {
             "model": "solar-1-mini-chat",
         }
+
+    @pytest.mark.xfail(reason="Not implemented.")
+    def test_usage_metadata_streaming(self, model: BaseChatModel) -> None:
+        super().test_usage_metadata_streaming(model)
