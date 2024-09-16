@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "langchain-upstage"
-version = "0.3.0.dev1"
+version = "0.3.0"
 description = "An integration package connecting Upstage and LangChain"
 authors = []
 readme = "README.md"
@@ -15,8 +15,8 @@ python = ">=3.9,<4.0"
 pypdf = "^4.2.0"
 requests = "^2.31.0"
 tokenizers = "^0.19.1"
-langchain-openai = { version = "^0.2.0.dev2", allow-prereleases = true }
-langchain-core = { version = "^0.3.0.dev5", allow-prereleases = true }
+langchain-openai = "^0.2"
+langchain-core = ">=0.3.0,<0.4"
 
 [tool.poetry.group.test]
 optional = true
@@ -32,7 +32,7 @@ syrupy = "^4.0.2"
 pytest-watcher = "^0.3.4"
 pytest-asyncio = "^0.21.1"
 docarray = "^0.32.1"
-langchain-standard-tests = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/standard-tests", branch = "v0.3rc" }
+langchain-standard-tests = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/standard-tests" }
 
 [tool.poetry.group.codespell]
 optional = true

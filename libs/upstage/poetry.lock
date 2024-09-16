@@ -511,37 +511,40 @@ files = [
 
 [[package]]
 name = "langchain-core"
-version = "0.3.0.dev5"
+version = "0.3.0"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_core-0.3.0.dev5-py3-none-any.whl", hash = "sha256:8de38ea9dd15f9705d20ee44af7160216052467d47893d5473e0e878861685be"},
-    {file = "langchain_core-0.3.0.dev5.tar.gz", hash = "sha256:d0986b3e2810522d90eb09d048ee4a92b079a334b313f4b7429624b4a062adff"},
+    {file = "langchain_core-0.3.0-py3-none-any.whl", hash = "sha256:bee6dae2366d037ef0c5b87401fed14b5497cad26f97724e8c9ca7bc9239e847"},
+    {file = "langchain_core-0.3.0.tar.gz", hash = "sha256:1249149ea3ba24c9c761011483c14091573a5eb1a773aa0db9c8ad155dd4a69d"},
 ]
 
 [package.dependencies]
 jsonpatch = ">=1.33,<2.0"
 langsmith = ">=0.1.117,<0.2.0"
 packaging = ">=23.2,<25"
-pydantic = ">=2.7.4,<3.0.0"
+pydantic = [
+    {version = ">=2.5.2,<3.0.0", markers = "python_full_version < \"3.12.4\""},
+    {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
+]
 PyYAML = ">=5.3"
 tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-openai"
-version = "0.2.0.dev2"
+version = "0.2.0"
 description = "An integration package connecting OpenAI and LangChain"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_openai-0.2.0.dev2-py3-none-any.whl", hash = "sha256:47ca99afe7ef674087e93744f810583487676de65c1fbc8b3121fe2a624f4b1a"},
-    {file = "langchain_openai-0.2.0.dev2.tar.gz", hash = "sha256:e10820926f84d0cd4c27ab3a8fce49f957c8e9e7d8e22a148021bf73fc046abc"},
+    {file = "langchain_openai-0.2.0-py3-none-any.whl", hash = "sha256:9a1a69ba0706f23ec2941096ead0bc39202cac0e9782a5d6c8d92cb2280c2759"},
+    {file = "langchain_openai-0.2.0.tar.gz", hash = "sha256:441ec8fd254992e5fa81d375e60849993a81db5e9e42a79344ebff7a40a0b45f"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.3.0.dev1,<0.4.0"
+langchain-core = ">=0.3,<0.4"
 openai = ">=1.40.0,<2.0.0"
 tiktoken = ">=0.7,<1"
 
@@ -556,15 +559,15 @@ develop = false
 
 [package.dependencies]
 httpx = "^0.27.0"
-langchain-core = ">=0.3.0.dev1"
+langchain-core = "^0.3.0"
 pytest = ">=7,<9"
 syrupy = "^4"
 
 [package.source]
 type = "git"
 url = "https://github.com/langchain-ai/langchain.git"
-reference = "v0.3rc"
-resolved_reference = "35aacff6c68927184693fcc4689e453db4ebb561"
+reference = "HEAD"
+resolved_reference = "a319a0ff1d17057d750f7e4a8fee98aa8f68703c"
 subdirectory = "libs/standard-tests"
 
 [[package]]
@@ -1750,4 +1753,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4.0"
-content-hash = "c3502495e7712d8d39efefb75c4001f1205adacd631b5ba09565110afb34e17e"
+content-hash = "d0f7ad6729f3366f4a157c74d851b27452f8f2476f77698f1f957193711a9ab7"
