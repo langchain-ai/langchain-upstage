@@ -8,5 +8,5 @@ os.environ["UPSTAGE_API_KEY"] = "foo"
 def test_initialization() -> None:
     """Test embedding model initialization."""
     UpstageGroundednessCheck()
-    UpstageGroundednessCheck(upstage_api_key="key")
+    UpstageGroundednessCheck(upstage_api_key="key")  # type: ignore[call-arg]
     UpstageGroundednessCheck(api_key="key")

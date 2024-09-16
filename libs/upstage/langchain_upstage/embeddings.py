@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import logging
-import os
 import warnings
 from typing import (
     Any,
@@ -16,18 +17,15 @@ from typing import (
 
 import openai
 from langchain_core.embeddings import Embeddings
-from langchain_core.pydantic_v1 import (
+from langchain_core.utils import from_env, get_pydantic_field_names, secret_from_env
+from pydantic import (
     BaseModel,
-    Extra,
+    ConfigDict,
     Field,
     SecretStr,
-    root_validator,
+    model_validator,
 )
-from langchain_core.utils import (
-    convert_to_secret_str,
-    get_from_dict_or_env,
-    get_pydantic_field_names,
-)
+from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
 
@@ -60,10 +58,23 @@ class UpstageEmbeddings(BaseModel, Embeddings):
     
     Not yet supported. 
     """
-    upstage_api_key: Optional[SecretStr] = Field(default=None, alias="api_key")
-    """API Key for Solar API."""
-    upstage_api_base: str = Field(
-        default="https://api.upstage.ai/v1/solar", alias="base_url"
+    upstage_api_key: SecretStr = Field(
+        default_factory=secret_from_env(
+            "UPSTAGE_API_KEY",
+            error_message=(
+                "You must specify an api key. "
+                "You can pass it an argument as `api_key=...` or "
+                "set the environment variable `UPSTAGE_API_KEY`."
+            ),
+        ),
+        alias="api_key",
+    )
+    """Automatically inferred from env are `UPSTAGE_API_KEY` if not provided."""
+    upstage_api_base: Optional[str] = Field(
+        default_factory=from_env(
+            "UPSTAGE_API_BASE", default="https://api.upstage.ai/v1/solar"
+        ),
+        alias="base_url",
     )
     """Endpoint URL to use."""
     embedding_ctx_length: int = 4096
@@ -112,12 +123,15 @@ class UpstageEmbeddings(BaseModel, Embeddings):
     """Optional httpx.AsyncClient. Only used for async invocations. Must specify 
         http_client as well if you'd like a custom client for sync invocations."""
 
-    class Config:
-        extra = Extra.forbid
-        allow_population_by_field_name = True
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+        protected_namespaces=(),
+    )
 
-    @root_validator(pre=True)
-    def build_extra(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="before")
+    @classmethod
+    def build_extra(cls, values: Dict[str, Any]) -> Any:
         """Build extra kwargs from additional params that were passed in."""
         all_required_field_names = get_pydantic_field_names(cls)
         extra = values.get("model_kwargs", {})
@@ -142,42 +156,31 @@ class UpstageEmbeddings(BaseModel, Embeddings):
         values["model_kwargs"] = extra
         return values
 
-    @root_validator()
-    def validate_environment(cls, values: Dict) -> Dict:
+    @model_validator(mode="after")
+    def validate_environment(self) -> Self:
         """Validate that api key and python package exists in environment."""
 
-        upstage_api_key = get_from_dict_or_env(
-            values, "upstage_api_key", "UPSTAGE_API_KEY"
-        )
-        values["upstage_api_key"] = (
-            convert_to_secret_str(upstage_api_key) if upstage_api_key else None
-        )
-        values["upstage_api_base"] = values["upstage_api_base"] or os.getenv(
-            "UPSTAGE_API_BASE"
-        )
-        client_params = {
+        client_params: dict = {
             "api_key": (
-                values["upstage_api_key"].get_secret_value()
-                if values["upstage_api_key"]
+                self.upstage_api_key.get_secret_value()
+                if self.upstage_api_key
                 else None
             ),
-            "base_url": values["upstage_api_base"],
-            "timeout": values["request_timeout"],
-            "max_retries": values["max_retries"],
-            "default_headers": values["default_headers"],
-            "default_query": values["default_query"],
+            "base_url": self.upstage_api_base,
+            "timeout": self.request_timeout,
+            "max_retries": self.max_retries,
+            "default_headers": self.default_headers,
+            "default_query": self.default_query,
         }
-        if not values.get("client"):
-            sync_specific = {"http_client": values["http_client"]}
-            values["client"] = openai.OpenAI(
-                **client_params, **sync_specific
-            ).embeddings
-        if not values.get("async_client"):
-            async_specific = {"http_client": values["http_async_client"]}
-            values["async_client"] = openai.AsyncOpenAI(
+        if not (self.client or None):
+            sync_specific: dict = {"http_client": self.http_client}
+            self.client = openai.OpenAI(**client_params, **sync_specific).embeddings
+        if not (self.async_client or None):
+            async_specific: dict = {"http_client": self.http_async_client}
+            self.async_client = openai.AsyncOpenAI(
                 **client_params, **async_specific
             ).embeddings
-        return values
+        return self
 
     @property
     def _invocation_params(self) -> Dict[str, Any]:

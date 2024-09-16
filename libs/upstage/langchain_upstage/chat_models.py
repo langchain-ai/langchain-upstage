@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from operator import itemgetter
 from typing import (
@@ -11,6 +13,7 @@ from typing import (
     Tuple,
     Type,
     Union,
+    cast,
     overload,
 )
 
@@ -32,10 +35,9 @@ from langchain_core.output_parsers.openai_tools import (
     PydanticToolsParser,
 )
 from langchain_core.outputs import ChatResult
-from langchain_core.pydantic_v1 import BaseModel, Field, SecretStr, root_validator
 from langchain_core.runnables import Runnable, RunnableMap, RunnablePassthrough
 from langchain_core.tools import BaseTool
-from langchain_core.utils import convert_to_secret_str, get_from_dict_or_env
+from langchain_core.utils import from_env, secret_from_env
 from langchain_core.utils.function_calling import convert_to_openai_tool
 from langchain_openai.chat_models.base import (
     BaseChatOpenAI,
@@ -45,7 +47,9 @@ from langchain_openai.chat_models.base import (
     _DictOrPydanticClass,
     _is_pydantic_class,
 )
+from pydantic import BaseModel, Field, SecretStr, model_validator
 from tokenizers import Tokenizer
+from typing_extensions import Self
 
 from langchain_upstage.document_parse import UpstageDocumentParseLoader
 
@@ -103,10 +107,23 @@ class ChatUpstage(BaseChatOpenAI):
 
     model_name: str = Field(default="solar-1-mini-chat", alias="model")
     """Model name to use."""
-    upstage_api_key: Optional[SecretStr] = Field(default=None, alias="api_key")
+    upstage_api_key: SecretStr = Field(
+        default_factory=secret_from_env(
+            "UPSTAGE_API_KEY",
+            error_message=(
+                "You must specify an api key. "
+                "You can pass it an argument as `api_key=...` or "
+                "set the environment variable `UPSTAGE_API_KEY`."
+            ),
+        ),
+        alias="api_key",
+    )
     """Automatically inferred from env are `UPSTAGE_API_KEY` if not provided."""
     upstage_api_base: Optional[str] = Field(
-        default="https://api.upstage.ai/v1/solar", alias="base_url"
+        default_factory=from_env(
+            "UPSTAGE_API_BASE", default="https://api.upstage.ai/v1/solar"
+        ),
+        alias="base_url",
     )
     """Base URL path for API requests, leave blank if not using a proxy or service 
     emulator."""
@@ -121,45 +138,38 @@ class ChatUpstage(BaseChatOpenAI):
     tokenizer_name: Optional[str] = "upstage/solar-pro-preview-tokenizer"
     """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-preview-tokenizer"""
 
-    @root_validator()
-    def validate_environment(cls, values: Dict) -> Dict:
+    @model_validator(mode="after")
+    def validate_environment(self) -> Self:
         """Validate that api key and python package exists in environment."""
-        if values["n"] < 1:
+        if self.n < 1:
             raise ValueError("n must be at least 1.")
-        if values["n"] > 1 and values["streaming"]:
+        if self.n > 1 and self.streaming:
             raise ValueError("n must be 1 when streaming.")
 
-        values["upstage_api_key"] = convert_to_secret_str(
-            get_from_dict_or_env(values, "upstage_api_key", "UPSTAGE_API_KEY")
-        )
-        values["upstage_api_base"] = values["upstage_api_base"] or os.getenv(
-            "UPSTAGE_API_BASE"
-        )
-
-        client_params = {
+        client_params: dict = {
             "api_key": (
-                values["upstage_api_key"].get_secret_value()
-                if values["upstage_api_key"]
+                self.upstage_api_key.get_secret_value()
+                if self.upstage_api_key
                 else None
             ),
-            "base_url": values["upstage_api_base"],
-            "timeout": values["request_timeout"],
-            "max_retries": values["max_retries"],
-            "default_headers": values["default_headers"],
-            "default_query": values["default_query"],
+            "base_url": self.upstage_api_base,
+            "timeout": self.request_timeout,
+            "max_retries": self.max_retries,
+            "default_headers": self.default_headers,
+            "default_query": self.default_query,
         }
 
-        if not values.get("client"):
-            sync_specific = {"http_client": values["http_client"]}
-            values["client"] = openai.OpenAI(
+        if not (self.client or None):
+            sync_specific: dict = {"http_client": self.http_client}
+            self.client = openai.OpenAI(
                 **client_params, **sync_specific
             ).chat.completions
-        if not values.get("async_client"):
-            async_specific = {"http_client": values["http_async_client"]}
-            values["async_client"] = openai.AsyncOpenAI(
+        if not (self.async_client or None):
+            async_specific: dict = {"http_client": self.http_async_client}
+            self.async_client = openai.AsyncOpenAI(
                 **client_params, **async_specific
             ).chat.completions
-        return values
+        return self
 
     def _get_tokenizer(self) -> Tokenizer:
         self.tokenizer_name = SOLAR_TOKENIZERS.get(self.model_name, self.tokenizer_name)
@@ -222,9 +232,8 @@ class ChatUpstage(BaseChatOpenAI):
                 messages, stop=stop, run_manager=run_manager, **kwargs
             )
             return generate_from_stream(stream_iter)
-        message_dicts, params = self._create_message_dicts(messages, stop)
-        params = {**params, **kwargs}
-        response = self.client.create(messages=message_dicts, **params)
+        payload = self._get_request_payload(messages, stop=stop, **kwargs)
+        response = self.client.create(**payload)
         return self._create_chat_result(response)
 
     async def _agenerate(
@@ -246,9 +255,8 @@ class ChatUpstage(BaseChatOpenAI):
             )
             return await agenerate_from_stream(stream_iter)
 
-        message_dicts, params = self._create_message_dicts(messages, stop)
-        params = {**params, **kwargs}
-        response = await self.async_client.create(messages=message_dicts, **params)
+        payload = self._get_request_payload(messages, stop=stop, **kwargs)
+        response = await self.async_client.create(**payload)
         return self._create_chat_result(response)
 
     def _using_doc_parsing_model(self, kwargs: Dict[str, Any]) -> bool:
@@ -280,6 +288,22 @@ class ChatUpstage(BaseChatOpenAI):
             file_title = file_titles[min(i, len(file_titles) - 1)]
             document_contents += f"{file_title}:\n{doc.page_content}\n\n"
         return document_contents
+
+    def _get_request_payload(
+        self,
+        input_: LanguageModelInput,
+        *,
+        stop: Optional[List[str]] = None,
+        **kwargs: Any,
+    ) -> dict:
+        messages = self._convert_input(input_).to_messages()
+        if stop is not None:
+            kwargs["stop"] = stop
+        return {
+            "messages": [_convert_message_to_dict(m) for m in messages],
+            **self._default_params,
+            **kwargs,
+        }
 
     # TODO: Fix typing.
     @overload  # type: ignore[override]
@@ -346,7 +370,7 @@ class ChatUpstage(BaseChatOpenAI):
             .. code-block:: python
 
                 from langchain_upstage import ChatUpstage
-                from langchain_core.pydantic_v1 import BaseModel
+                from pydantic import BaseModel
 
 
                 class AnswerWithJustification(BaseModel):
@@ -372,7 +396,7 @@ class ChatUpstage(BaseChatOpenAI):
             .. code-block:: python
 
                 from langchain_upstage import ChatUpstage
-                from langchain_core.pydantic_v1 import BaseModel
+                from pydantic import BaseModel
 
 
                 class AnswerWithJustification(BaseModel):
@@ -400,8 +424,8 @@ class ChatUpstage(BaseChatOpenAI):
             .. code-block:: python
 
                 from langchain_upstage import ChatUpstage
-                from langchain_core.pydantic_v1 import BaseModel
                 from langchain_core.utils.function_calling import convert_to_openai_tool
+                from pydantic import BaseModel
 
 
                 class AnswerWithJustification(BaseModel):
@@ -432,7 +456,7 @@ class ChatUpstage(BaseChatOpenAI):
         llm = self.bind_tools([schema], tool_choice=tool_name)
         if is_pydantic_schema:
             output_parser: OutputParserLike = PydanticToolsParser(
-                tools=[schema], first_tool_only=True
+                tools=[cast(type, schema)], first_tool_only=True
             )
         else:
             output_parser = JsonOutputKeyToolsParser(

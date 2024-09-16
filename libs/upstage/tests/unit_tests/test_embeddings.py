@@ -23,10 +23,10 @@ def test_upstage_invalid_model_kwargs() -> None:
 
 def test_upstage_invalid_model() -> None:
     with pytest.raises(ValueError):
-        UpstageEmbeddings()
+        UpstageEmbeddings()  # type: ignore[call-arg]
 
 
 def test_upstage_incorrect_field() -> None:
     with pytest.warns(match="not default parameter"):
-        llm = UpstageEmbeddings(model="solar-embedding-1-large", foo="bar")
+        llm = UpstageEmbeddings(model="solar-embedding-1-large", foo="bar")  # type: ignore
     assert llm.model_kwargs == {"foo": "bar"}
