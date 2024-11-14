@@ -32,7 +32,7 @@ syrupy = "^4.0.2"
 pytest-watcher = "^0.3.4"
 pytest-asyncio = "^0.21.1"
 docarray = "^0.32.1"
-langchain-standard-tests = { git = "https://github.com/langchain-ai/langchain.git", subdirectory = "libs/standard-tests" }
+langchain-tests = "0.3.0"
 
 [tool.poetry.group.codespell]
 optional = true

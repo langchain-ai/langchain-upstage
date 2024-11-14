@@ -181,7 +181,9 @@ class ChatUpstage(BaseChatOpenAI):
         encode = tokenizer.encode(text, add_special_tokens=False)
         return encode.ids
 
-    def get_num_tokens_from_messages(self, messages: List[BaseMessage]) -> int:
+    def get_num_tokens_from_messages(
+        self, messages: List[BaseMessage], tools: Sequence[Any] | None = None
+    ) -> int:
         """Calculate num tokens for solar model."""
         tokenizer = self._get_tokenizer()
         tokens_per_message = 5  # <|im_start|>{role}\n{message}<|im_end|>
@@ -270,9 +272,11 @@ class ChatUpstage(BaseChatOpenAI):
         document_contents = "Documents:\n"
 
         loader = UpstageDocumentParseLoader(
-            api_key=self.upstage_api_key.get_secret_value()
-            if self.upstage_api_key
-            else None,
+            api_key=(
+                self.upstage_api_key.get_secret_value()
+                if self.upstage_api_key
+                else None
+            ),
             file_path=file_path,
             output_format="text",
             coordinates=False,
