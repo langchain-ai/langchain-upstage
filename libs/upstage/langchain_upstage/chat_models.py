@@ -55,7 +55,7 @@ from langchain_upstage.document_parse import UpstageDocumentParseLoader
 
 DOC_PARSING_MODEL = ["solar-pro"]
 SOLAR_TOKENIZERS = {
-    "solar-pro": "upstage/solar-pro-preview-tokenizer",
+    "solar-pro": "upstage/solar-pro-tokenizer",
     "solar-1-mini-chat": "upstage/solar-1-mini-tokenizer",
     "solar-docvision": "upstage/solar-docvision-preview-tokenizer",
 }
@@ -135,8 +135,8 @@ class ChatUpstage(BaseChatOpenAI):
     """openai organization is not supported for upstage."""
     tiktoken_model_name: Optional[str] = None
     """tiktoken is not supported for upstage."""
-    tokenizer_name: Optional[str] = "upstage/solar-pro-preview-tokenizer"
-    """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-preview-tokenizer"""
+    tokenizer_name: Optional[str] = "upstage/solar-pro-tokenizer"
+    """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-tokenizer"""
 
     @model_validator(mode="after")
     def validate_environment(self) -> Self:
