@@ -47,7 +47,9 @@ def test_document_parse(
         base64_encoding=[base64_encoding],
     )
     documents = loader.load()
-    if split == "element":
+    if split == "element" and ocr == "auto":
         assert len(documents) == 14
+    if split == "element" and ocr == "force":
+        assert len(documents) == 15
     else:
         assert len(documents) == 1
