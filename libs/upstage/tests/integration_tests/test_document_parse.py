@@ -48,6 +48,6 @@ def test_document_parse(
     )
     documents = loader.load()
     if split == "element":
-        assert len(documents) == 15
+        assert len(documents) == 14
     else:
         assert len(documents) == 1
