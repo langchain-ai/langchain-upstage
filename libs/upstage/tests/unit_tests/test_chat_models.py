@@ -112,7 +112,7 @@ def mock_completion() -> dict:
         "id": "chatcmpl-7fcZavknQda3SQ",
         "object": "chat.completion",
         "created": 1689989000,
-        "model": "solar-1-mini-chat",
+        "model": "solar-mini",
         "choices": [
             {
                 "index": 0,
@@ -248,12 +248,12 @@ def test_upstage_invoke_name(mock_completion: dict) -> None:
 
 
 def test_upstage_tokenizer() -> None:
-    llm = ChatUpstage(model="solar-1-mini-chat")
+    llm = ChatUpstage(model="solar-mini")
     llm._get_tokenizer()
 
 
 def test_upstage_tokenizer_get_num_tokens() -> None:
-    llm = ChatUpstage(model="solar-1-mini-chat")
+    llm = ChatUpstage(model="solar-mini")
     num_tokens = llm.get_num_tokens_from_messages([HumanMessage(content="Hello World")])
     assert num_tokens == 12
 
@@ -279,4 +279,4 @@ def test_chat_upstage_extra_kwargs() -> None:
 
     # Test that "model" cannot be specified in kwargs
     with pytest.raises(ValueError):
-        ChatUpstage(model_kwargs={"model": "solar-1-mini-chat"})
+        ChatUpstage(model_kwargs={"model": "solar-mini"})
