@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "langchain-upstage"
-version = "0.5.0rc0"
+version = "0.5.0rc1"
 description = "An integration package connecting Upstage and LangChain"
 authors = []
 readme = "README.md"
@@ -32,7 +32,7 @@ syrupy = "^4.0.2"
 pytest-watcher = "^0.3.4"
 pytest-asyncio = "^0.21.1"
 docarray = "^0.32.1"
-langchain-tests = "0.3.0"
+langchain-tests = "0.3.7"
 
 [tool.poetry.group.codespell]
 optional = true
