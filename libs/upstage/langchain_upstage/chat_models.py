@@ -56,8 +56,7 @@ from langchain_upstage.document_parse import UpstageDocumentParseLoader
 DOC_PARSING_MODEL = ["solar-pro"]
 SOLAR_TOKENIZERS = {
     "solar-pro": "upstage/solar-pro-tokenizer",
-    "solar-1-mini-chat": "upstage/solar-1-mini-tokenizer",
-    "solar-docvision": "upstage/solar-docvision-preview-tokenizer",
+    "solar-mini": "upstage/solar-1-mini-tokenizer",
 }
 
 
@@ -105,7 +104,7 @@ class ChatUpstage(BaseChatOpenAI):
         params["ls_provider"] = "upstage"
         return params
 
-    model_name: str = Field(default="solar-1-mini-chat", alias="model")
+    model_name: str = Field(default="solar-mini", alias="model")
     """Model name to use."""
     upstage_api_key: SecretStr = Field(
         default_factory=secret_from_env(
@@ -384,7 +383,7 @@ class ChatUpstage(BaseChatOpenAI):
                     justification: str
 
 
-                llm = ChatUpstage(model="solar-1-mini-chat", temperature=0)
+                llm = ChatUpstage(model="solar-mini", temperature=0)
                 structured_llm = llm.with_structured_output(AnswerWithJustification)
 
                 structured_llm.invoke(
@@ -410,7 +409,7 @@ class ChatUpstage(BaseChatOpenAI):
                     justification: str
 
 
-                llm = ChatUpstage(model="solar-1-mini-chat", temperature=0)
+                llm = ChatUpstage(model="solar-mini", temperature=0)
                 structured_llm = llm.with_structured_output(
                     AnswerWithJustification, include_raw=True
                 )
@@ -440,7 +439,7 @@ class ChatUpstage(BaseChatOpenAI):
 
 
                 dict_schema = convert_to_openai_tool(AnswerWithJustification)
-                llm = ChatUpstage(model="solar-1-mini-chat", temperature=0)
+                llm = ChatUpstage(model="solar-mini", temperature=0)
                 structured_llm = llm.with_structured_output(dict_schema)
 
                 structured_llm.invoke(

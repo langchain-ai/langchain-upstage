@@ -72,7 +72,7 @@ class UpstageGroundednessCheck(BaseTool):
             raise ValueError("UPSTAGE_API_KEY must be set or passed")
 
         api_wrapper = ChatUpstage(
-            model="solar-1-mini-answer-verification",
+            model="groundedness-check",
             api_key=upstage_api_key.get_secret_value(),
         )
         super().__init__(upstage_api_key=upstage_api_key, api_wrapper=api_wrapper)
