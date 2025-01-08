@@ -57,7 +57,6 @@ DOC_PARSING_MODEL = ["solar-pro"]
 SOLAR_TOKENIZERS = {
     "solar-pro": "upstage/solar-pro-tokenizer",
     "solar-mini": "upstage/solar-1-mini-tokenizer",
-    "solar-docvision": "upstage/solar-docvision-preview-tokenizer",
 }
 
 
