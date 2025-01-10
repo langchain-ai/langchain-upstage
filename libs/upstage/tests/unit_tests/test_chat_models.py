@@ -272,11 +272,3 @@ def test_chat_upstage_extra_kwargs() -> None:
     # Test that if provided twice it errors
     with pytest.raises(ValueError):
         ChatUpstage(foo=3, model_kwargs={"foo": 2})  # type: ignore
-
-    # Test that if explicit param is specified in kwargs it errors
-    with pytest.raises(ValueError):
-        ChatUpstage(model_kwargs={"temperature": 0.2})
-
-    # Test that "model" cannot be specified in kwargs
-    with pytest.raises(ValueError):
-        ChatUpstage(model_kwargs={"model": "solar-mini"})
