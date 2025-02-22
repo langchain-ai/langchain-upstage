@@ -17,7 +17,6 @@ from typing import (
     overload,
 )
 
-import openai
 from langchain_core.callbacks import (
     AsyncCallbackManagerForLLMRun,
     CallbackManagerForLLMRun,
@@ -145,7 +144,7 @@ class ChatUpstage(BaseChatOpenAI):
         if self.n is not None and self.n > 1 and self.streaming:
             raise ValueError("n must be 1 when streaming.")
 
-        client_params: dict = {
+        self._client_params: dict = {
             "api_key": (
                 self.upstage_api_key.get_secret_value()
                 if self.upstage_api_key
@@ -157,18 +156,8 @@ class ChatUpstage(BaseChatOpenAI):
             "default_query": self.default_query,
         }
         if self.max_retries is not None:
-            client_params["max_retries"] = self.max_retries
+            self._client_params["max_retries"] = self.max_retries
 
-        if not (self.client or None):
-            sync_specific: dict = {"http_client": self.http_client}
-            self.client = openai.OpenAI(
-                **client_params, **sync_specific
-            ).chat.completions
-        if not (self.async_client or None):
-            async_specific: dict = {"http_client": self.http_async_client}
-            self.async_client = openai.AsyncOpenAI(
-                **client_params, **async_specific
-            ).chat.completions
         return self
 
     def _get_tokenizer(self) -> Tokenizer:

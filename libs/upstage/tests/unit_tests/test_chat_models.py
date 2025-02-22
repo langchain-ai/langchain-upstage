@@ -140,7 +140,7 @@ def test_upstage_invoke(mock_completion: dict) -> None:
     mock_client.create = mock_create
     with patch.object(
         llm,
-        "client",
+        "_client",
         mock_client,
     ):
         res = llm.invoke("bab")
@@ -162,7 +162,7 @@ def test_upstage_invoke_with_doc_parsing_model(mock_completion: dict) -> None:
     mock_client.create = mock_create
     with patch.object(
         llm,
-        "client",
+        "_client",
         mock_client,
     ), patch(
         "langchain_upstage.chat_models.UpstageDocumentParseLoader.load",
@@ -186,7 +186,7 @@ async def test_upstage_ainvoke(mock_completion: dict) -> None:
     mock_client.create = mock_create
     with patch.object(
         llm,
-        "async_client",
+        "_async_client",
         mock_client,
     ):
         res = await llm.ainvoke("bab")
@@ -208,7 +208,7 @@ async def test_upstage_ainvoke_with_doc_parsing_model(mock_completion: dict) -> 
     mock_client.create = mock_create
     with patch.object(
         llm,
-        "async_client",
+        "_async_client",
         mock_client,
     ), patch(
         "langchain_upstage.chat_models.UpstageDocumentParseLoader.load",
@@ -227,7 +227,7 @@ def test_upstage_invoke_name(mock_completion: dict) -> None:
 
     with patch.object(
         llm,
-        "client",
+        "_client",
         mock_client,
     ):
         messages = [
