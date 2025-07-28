@@ -48,9 +48,6 @@ def test_document_parse(
     )
     documents = loader.load()
     if split == "element":
-        if ocr == "auto":
-            assert len(documents) == 14
-        else:
-            assert len(documents) == 15
+        assert len(documents) == 14
     else:
         assert len(documents) == 1
