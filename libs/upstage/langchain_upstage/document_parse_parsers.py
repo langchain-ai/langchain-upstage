@@ -13,7 +13,7 @@ from pypdf.errors import PdfReadError
 logger = logging.getLogger("pypdf")
 logger.setLevel(logging.ERROR)
 
-DOCUMENT_PARSE_BASE_URL = "https://api.upstage.ai/v1/document-ai/document-parse"
+DOCUMENT_PARSE_BASE_URL = "https://api.upstage.ai/v1/document-digitization"
 DEFAULT_NUM_PAGES = 10
 DOCUMENT_PARSE_DEFAULT_MODEL = "document-parse"
 
