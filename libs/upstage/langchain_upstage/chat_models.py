@@ -53,8 +53,9 @@ from typing_extensions import Self
 
 from langchain_upstage.document_parse import UpstageDocumentParseLoader
 
-DOC_PARSING_MODEL = ["solar-pro"]
+DOC_PARSING_MODEL = ["solar-pro2", "solar-pro"]
 SOLAR_TOKENIZERS = {
+    "solar-pro2": "upstage/solar-pro2-tokenizer",
     "solar-pro": "upstage/solar-pro-tokenizer",
     "solar-mini": "upstage/solar-1-mini-tokenizer",
 }

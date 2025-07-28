@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "langchain-upstage"
-version = "0.6.0"
+version = "0.6.1rc0"
 description = "An integration package connecting Upstage and LangChain"
 authors = []
 readme = "README.md"
@@ -14,7 +14,7 @@ license = "MIT"
 python = ">=3.9,<4.0"
 pypdf = "^4.2.0"
 requests = "^2.31.0"
-tokenizers = "^0.19.1"
+tokenizers = "^0.20.0"
 langchain-openai = "^0.3"
 langchain-core = "^0.3.29"
 
