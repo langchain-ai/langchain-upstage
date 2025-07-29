@@ -8,14 +8,14 @@ from typing import (
     Dict,
     List,
     Literal,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
     Type,
     Union,
     cast,
-    overload, 
-    Mapping,
+    overload,
 )
 
 import openai
