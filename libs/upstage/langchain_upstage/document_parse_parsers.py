@@ -165,7 +165,7 @@ class UpstageDocumentParseParser(BaseBlobParser):
         try:
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
-                "x-upstage-client": "langchain"
+                "x-upstage-client": "langchain",
             }
             response = requests.post(
                 self.base_url,
