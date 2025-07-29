@@ -14,7 +14,8 @@ from typing import (
     Type,
     Union,
     cast,
-    overload,
+    overload, 
+    Mapping,
 )
 
 import openai
@@ -137,6 +138,8 @@ class ChatUpstage(BaseChatOpenAI):
     """tiktoken is not supported for upstage."""
     tokenizer_name: Optional[str] = "upstage/solar-pro-tokenizer"
     """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-tokenizer"""
+    default_headers: Union[Mapping[str, str], None] = {"x-upstage-client": "langchain"}
+    """add trace header."""
 
     @model_validator(mode="after")
     def validate_environment(self) -> Self:

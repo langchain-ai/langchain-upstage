@@ -111,7 +111,8 @@ class UpstageEmbeddings(BaseModel, Embeddings):
     Defaults to not skipping.
     
     Not yet supported."""
-    default_headers: Union[Mapping[str, str], None] = None
+    default_headers: Union[Mapping[str, str], None] = {"x-upstage-client": "langchain"}
+    """add trace header."""
     default_query: Union[Mapping[str, object], None] = None
     # Configure a custom httpx client. See the
     # [httpx documentation](https://www.python-httpx.org/api/#client) for more details.
