@@ -8,6 +8,7 @@ from typing import (
     Dict,
     List,
     Literal,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -137,6 +138,8 @@ class ChatUpstage(BaseChatOpenAI):
     """tiktoken is not supported for upstage."""
     tokenizer_name: Optional[str] = "upstage/solar-pro-tokenizer"
     """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-tokenizer"""
+    default_headers: Union[Mapping[str, str], None] = {"x-upstage-client": "langchain"}
+    """add trace header."""
 
     @model_validator(mode="after")
     def validate_environment(self) -> Self:
