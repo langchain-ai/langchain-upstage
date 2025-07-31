@@ -1,31 +1,28 @@
 from __future__ import annotations
 
 import base64
-import openai
 import os
 import re
 import warnings
-from typing import (
-    Any,
-    Dict,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
+import openai
 from langchain_core.utils import from_env, get_pydantic_field_names, secret_from_env
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    SecretStr,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 from typing_extensions import Self
 
 INFORMATION_EXTRACTION_BASE_URL = "https://api.upstage.ai/v1/information-extraction"
-SUPPORTED_EXTENSIONS = ["jpeg", "png", "bmp", "pdf", "tiff", "heic", "docx", "pptx", "xlsx"]
+SUPPORTED_EXTENSIONS = [
+    "jpeg",
+    "png",
+    "bmp",
+    "pdf",
+    "tiff",
+    "heic",
+    "docx",
+    "pptx",
+    "xlsx"
+]
 
 KILOBYTE = 1024
 MEGABYTE = 1024 * KILOBYTE
@@ -38,14 +35,14 @@ def _process_input(input_path):
 
     if os.path.exists(input_path):
         if os.path.getsize(input_path) > MAX_FILE_SIZE:
-            raise ValueError(f"File size exceeds the maximum allowed limit of {MAX_FILE_SIZE / MEGABYTE}MB")
+            raise ValueError(f"File too large: max {MAX_FILE_SIZE / MEGABYTE}MB")
     else:
         raise FileNotFoundError(f"File not found: {input_path}")
 
     file_ext = input_path.lower().split('.')[-1]
     if file_ext not in SUPPORTED_EXTENSIONS:
         supported = ', '.join([f".{ext}" for ext in SUPPORTED_EXTENSIONS])
-        raise ValueError(f"Unsupported image extension. Supported extensions: {supported}")
+        raise ValueError(f"Unsupported image extension. supported: {supported}")
 
     try:
         with open(input_path, 'rb') as img_file:
@@ -59,10 +56,10 @@ def _process_input(input_path):
 
 def create_message(url: str):
     return {
-            "type": "image_url",
-            "image_url": {
-                "url": url
-            }
+        "type": "image_url",
+        "image_url": {
+            "url": url
+        }
     }
 
 
@@ -205,4 +202,8 @@ class UpstageUniversalInformationExtraction(BaseModel):
             }
         ]
 
-        return self.client.create(model=self.model_name, messages=messages, response_format=response_format)
+        return self.client.create(
+            model=self.model_name,
+            messages=messages,
+            response_format=response_format
+        )
