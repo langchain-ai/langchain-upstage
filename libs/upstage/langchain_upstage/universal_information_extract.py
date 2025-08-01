@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import base64
+import json
 import os
 import re
 import warnings
 from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
 import openai
+import requests
 from langchain_core.utils import from_env, get_pydantic_field_names, secret_from_env
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 from typing_extensions import Self
 
-INFORMATION_EXTRACTION_BASE_URL = "https://api.upstage.ai/v1/information-extraction"
+INFORMATION_EXTRACT_BASE_URL = "https://api.upstage.ai/v1/information-extraction"
 SUPPORTED_EXTENSIONS = [
     "jpeg",
     "png",
@@ -96,12 +98,7 @@ class UpstageUniversalInformationExtraction(BaseModel):
         alias="api_key",
     )
     """Automatically inferred from env are `UPSTAGE_API_KEY` if not provided."""
-    upstage_api_base: Optional[str] = Field(
-        default_factory=from_env(
-            "UPSTAGE_API_BASE", default=INFORMATION_EXTRACTION_BASE_URL
-        ),
-        alias="base_url",
-    )
+    base_url: str = INFORMATION_EXTRACT_BASE_URL
     """Endpoint URL to use."""
     request_timeout: Optional[Union[float, Tuple[float, float], Any]] = Field(
         default=None, alias="timeout"
@@ -168,7 +165,7 @@ class UpstageUniversalInformationExtraction(BaseModel):
                 if self.upstage_api_key
                 else None
             ),
-            "base_url": self.upstage_api_base,
+            "base_url": self.base_url,
             "timeout": self.request_timeout,
             "max_retries": self.max_retries,
             "default_headers": self.default_headers,
@@ -189,7 +186,11 @@ class UpstageUniversalInformationExtraction(BaseModel):
             ).chat.completions
         return self
 
-    def information_extract(self, img_paths: list[str], response_format):
+    def information_extract(
+            self,
+            img_paths: list[str],
+            response_format: Optional[dict]=None
+    ):
         contents = [
             create_message(_process_input(img_path))
             for img_path in img_paths
@@ -202,8 +203,29 @@ class UpstageUniversalInformationExtraction(BaseModel):
             }
         ]
 
+        if response_format is None:
+            response_format = self._schema_generate(messages)
+
         return self.client.create(
             model=self.model_name,
             messages=messages,
             response_format=response_format
         )
+
+    def _schema_generate(self, messages):
+        headers = (self.default_headers or {}) | {
+            "Authorization": f"Bearer {self.upstage_api_key.get_secret_value()}"
+        }
+
+        body = {
+            "model": self.model_name,
+            "messages": messages,
+        }
+
+        response = requests.post(
+            self.base_url + "/schema-generation",
+            headers=headers,
+            json=body
+        )
+
+        return json.loads(response.json()["choices"][0]["message"]["content"])
