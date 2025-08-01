@@ -6,6 +6,8 @@ from langchain_upstage.tools.groundedness_check import (
     GroundednessCheck,
     UpstageGroundednessCheck,
 )
+from langchain_upstage.universal_information_extract import UpstageUniversalInformationExtraction
+from langchain_upstage.prebuilt_information_extract import UpstagePrebuiltInformationExtraction
 
 __all__ = [
     "ChatUpstage",
@@ -14,4 +16,6 @@ __all__ = [
     "UpstageDocumentParseParser",
     "UpstageGroundednessCheck",
     "GroundednessCheck",
+    "UpstageUniversalInformationExtraction",
+    "UpstagePrebuiltInformationExtraction",
 ]
