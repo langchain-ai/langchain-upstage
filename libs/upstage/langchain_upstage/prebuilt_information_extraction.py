@@ -34,10 +34,10 @@ SUPPORTED_EXTENSIONS = [
 
 
 def get_from_param_or_env(
-        key: str,
-        param: Optional[str] = None,
-        env_key: Optional[str] = None,
-        default: Optional[str] = None,
+    key: str,
+    param: Optional[str] = None,
+    env_key: Optional[str] = None,
+    default: Optional[str] = None,
 ) -> str:
     """Get a value from a param or an environment variable."""
     if param is not None:
@@ -69,10 +69,10 @@ class UpstagePrebuiltInformationExtraction:
     """
 
     def __init__(
-            self,
-            model: MODELS,
-            api_key: Optional[str] = None,
-            base_url: str = INFORMATION_EXTRACT_BASE_URL
+        self,
+        model: MODELS,
+        api_key: Optional[str] = None,
+        base_url: str = INFORMATION_EXTRACT_BASE_URL,
     ):
         self.model_name = model
         self.api_key = get_from_param_or_env(
@@ -83,7 +83,7 @@ class UpstagePrebuiltInformationExtraction:
         )
         self.base_url = base_url
 
-    def information_extract(self, file_path):
+    def information_extract(self, file_path: str) -> dict:
         valid_extension(file_path, SUPPORTED_EXTENSIONS)
 
         headers = {"Authorization": f"Bearer {self.api_key}"}

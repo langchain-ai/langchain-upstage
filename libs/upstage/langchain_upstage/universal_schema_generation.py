@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Dict, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import openai
 from langchain_core.utils import get_pydantic_field_names, secret_from_env
@@ -14,7 +14,9 @@ from langchain_upstage.tools.information_extraction_check import (
     create_message,
 )
 
-SCHEMA_GENERATION_BASE_URL = "https://api.upstage.ai/v1/information-extraction/schema-generation"
+SCHEMA_GENERATION_BASE_URL = (
+    "https://api.upstage.ai/v1/information-extraction/schema-generation"
+)
 SUPPORTED_EXTENSIONS = [
     "jpeg",
     "png",
@@ -24,7 +26,7 @@ SUPPORTED_EXTENSIONS = [
     "heic",
     "docx",
     "pptx",
-    "xlsx"
+    "xlsx",
 ]
 
 MAX_FILE_SIZE = 50 * MEGABYTE
@@ -46,10 +48,7 @@ class UpstageUniversalSchemaGeneration(BaseModel):
 
     client: Any = Field(default=None, exclude=True)  #: :meta private:
     async_client: Any = Field(default=None, exclude=True)  #: :meta private:
-    model_name: str = Field(
-        default="information-extract",
-        alias="model"
-    )
+    model_name: str = Field(default="information-extract", alias="model")
     """Model name to use."""
     upstage_api_key: SecretStr = Field(
         default_factory=secret_from_env(
@@ -151,18 +150,13 @@ class UpstageUniversalSchemaGeneration(BaseModel):
             ).chat.completions
         return self
 
-    def generate(self, img_paths):
+    def generate(self, img_paths: List[str]) -> dict:
         contents = [
             create_message(img_path, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
             for img_path in img_paths
         ]
 
-        messages = [
-            {
-                "role": "user",
-                "content": contents
-            }
-        ]
+        messages = [{"role": "user", "content": contents}]
 
         response = self.client.create(
             model=self.model_name,

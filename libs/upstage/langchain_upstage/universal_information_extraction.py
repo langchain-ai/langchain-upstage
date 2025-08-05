@@ -4,6 +4,7 @@ import warnings
 from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
 import openai
+from langchain_core.outputs import ChatResult
 from langchain_core.utils import get_pydantic_field_names, secret_from_env
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 from typing_extensions import Self
@@ -23,10 +24,11 @@ SUPPORTED_EXTENSIONS = [
     "heic",
     "docx",
     "pptx",
-    "xlsx"
+    "xlsx",
 ]
 
 MAX_FILE_SIZE = 50 * MEGABYTE
+
 
 class UpstageUniversalInformationExtraction(BaseModel):
     """UpstageUniversalInformationExtraction Information extraction model.
@@ -44,10 +46,7 @@ class UpstageUniversalInformationExtraction(BaseModel):
 
     client: Any = Field(default=None, exclude=True)  #: :meta private:
     async_client: Any = Field(default=None, exclude=True)  #: :meta private:
-    model_name: str = Field(
-        default="information-extract",
-        alias="model"
-    )
+    model_name: str = Field(default="information-extract", alias="model")
     """Model name to use."""
     upstage_api_key: SecretStr = Field(
         default_factory=secret_from_env(
@@ -150,22 +149,16 @@ class UpstageUniversalInformationExtraction(BaseModel):
         return self
 
     def extract(
-            self,
-            img_paths: list[str],
-            response_format: Dict,
-    ):
-
+        self,
+        img_paths: list[str],
+        response_format: Dict,
+    ) -> ChatResult:
         contents = [
             create_message(img_path, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
             for img_path in img_paths
         ]
 
-        messages = [
-            {
-                "role": "user",
-                "content": contents
-            }
-        ]
+        messages = [{"role": "user", "content": contents}]
 
         return self.client.create(
             model=self.model_name,

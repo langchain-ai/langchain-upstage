@@ -6,7 +6,10 @@ from typing import List
 KILOBYTE = 1024
 MEGABYTE = 1024 * KILOBYTE
 
-def _process_input(input_path, supported_extensions, max_file_size):
+
+def _process_input(
+    input_path: str, supported_extensions: List[str], max_file_size: int
+) -> str:
     if re.match(r"^https?://", input_path):
         return input_path
 
@@ -19,28 +22,25 @@ def _process_input(input_path, supported_extensions, max_file_size):
     valid_extension(input_path, supported_extensions)
 
     try:
-        with open(input_path, 'rb') as img_file:
+        with open(input_path, "rb") as img_file:
             img_bytes = img_file.read()
-            base64_data = base64.b64encode(img_bytes).decode('utf-8')
+            base64_data = base64.b64encode(img_bytes).decode("utf-8")
 
         return f"data:application/octet-stream;base64,{base64_data}"
     except Exception as e:
         raise ValueError(f"Error occurred while processing the file: {e}")
 
 
-def valid_extension(input_path, supported_extensions):
-    file_ext = input_path.lower().split('.')[-1]
+def valid_extension(input_path: str, supported_extensions: List[str]) -> None:
+    file_ext = input_path.lower().split(".")[-1]
     if file_ext not in supported_extensions:
-        supported = ', '.join([f".{ext}" for ext in supported_extensions])
+        supported = ", ".join([f".{ext}" for ext in supported_extensions])
         raise ValueError(f"Unsupported image extension. supported: {supported}")
 
 
-def create_message(input_path: str, supported_extensions: List[str], max_file_size: int):
+def create_message(
+    input_path: str, supported_extensions: List[str], max_file_size: int
+) -> dict:
     url = _process_input(input_path, supported_extensions, max_file_size)
 
-    return {
-        "type": "image_url",
-        "image_url": {
-            "url": url
-        }
-    }
+    return {"type": "image_url", "image_url": {"url": url}}
