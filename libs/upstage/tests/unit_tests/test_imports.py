@@ -7,6 +7,9 @@ EXPECTED_ALL = [
     "UpstageDocumentParseParser",
     "UpstageGroundednessCheck",
     "GroundednessCheck",
+    "UpstageUniversalInformationExtraction",
+    "UpstageUniversalSchemaGeneration",
+    "UpstagePrebuiltInformationExtraction",
 ]
 
 
