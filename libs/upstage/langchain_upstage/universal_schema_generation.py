@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-import base64
 import json
-import os
-import re
 import warnings
 from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
 import openai
-import requests
 from langchain_core.utils import get_pydantic_field_names, secret_from_env
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 from typing_extensions import Self
 
-from langchain_upstage.tools.information_extraction_check import MEGABYTE, create_message
+from langchain_upstage.tools.information_extraction_check import (
+    MEGABYTE,
+    create_message,
+)
 
 SCHEMA_GENERATION_BASE_URL = "https://api.upstage.ai/v1/information-extraction/schema-generation"
 SUPPORTED_EXTENSIONS = [
