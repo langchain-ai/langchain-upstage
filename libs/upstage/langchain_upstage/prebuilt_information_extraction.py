@@ -8,6 +8,8 @@ from typing import (
 
 import requests
 
+from langchain_upstage.tools.information_extraction_check import valid_extension
+
 INFORMATION_EXTRACT_BASE_URL = "https://api.upstage.ai/v1/information-extraction"
 MODELS = Literal[
     "receipt-extraction",
@@ -15,6 +17,19 @@ MODELS = Literal[
     "bill-of-lading-and-shipping-request-extraction",
     "commercial-invoice-and-packing-list-extraction",
     "kr-export-declaration-certificate-extraction",
+]
+SUPPORTED_EXTENSIONS = [
+    "jpeg",
+    "png",
+    "bmp",
+    "pdf",
+    "tiff",
+    "heic",
+    "docx",
+    "pptx",
+    "xlsx",
+    "hwp",
+    "hwpx",
 ]
 
 
@@ -69,6 +84,8 @@ class UpstagePrebuiltInformationExtraction:
         self.base_url = base_url
 
     def information_extract(self, file_path):
+        valid_extension(file_path, SUPPORTED_EXTENSIONS)
+
         headers = {"Authorization": f"Bearer {self.api_key}"}
 
         files = {"document": open(file_path, "rb")}

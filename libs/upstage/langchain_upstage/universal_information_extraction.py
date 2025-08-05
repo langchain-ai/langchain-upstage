@@ -9,7 +9,8 @@ from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
 import openai
 import requests
-from langchain_core.utils import from_env, get_pydantic_field_names, secret_from_env
+from langchain_core.utils import get_pydantic_field_names, secret_from_env
+from langchain_upstage.tools.information_extraction_check import create_message, MEGABYTE
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 from typing_extensions import Self
 
@@ -26,44 +27,7 @@ SUPPORTED_EXTENSIONS = [
     "xlsx"
 ]
 
-KILOBYTE = 1024
-MEGABYTE = 1024 * KILOBYTE
 MAX_FILE_SIZE = 50 * MEGABYTE
-
-
-def _process_input(input_path):
-    if re.match(r"^https?://", input_path):
-        return input_path
-
-    if os.path.exists(input_path):
-        if os.path.getsize(input_path) > MAX_FILE_SIZE:
-            raise ValueError(f"File too large: max {MAX_FILE_SIZE / MEGABYTE}MB")
-    else:
-        raise FileNotFoundError(f"File not found: {input_path}")
-
-    file_ext = input_path.lower().split('.')[-1]
-    if file_ext not in SUPPORTED_EXTENSIONS:
-        supported = ', '.join([f".{ext}" for ext in SUPPORTED_EXTENSIONS])
-        raise ValueError(f"Unsupported image extension. supported: {supported}")
-
-    try:
-        with open(input_path, 'rb') as img_file:
-            img_bytes = img_file.read()
-            base64_data = base64.b64encode(img_bytes).decode('utf-8')
-
-        return f"data:application/octet-stream;base64,{base64_data}"
-    except Exception as e:
-        raise ValueError(f"Error occurred while processing the file: {e}")
-
-
-def create_message(url: str):
-    return {
-        "type": "image_url",
-        "image_url": {
-            "url": url
-        }
-    }
-
 
 class UpstageUniversalInformationExtraction(BaseModel):
     """UpstageUniversalInformationExtraction Information extraction model.
@@ -186,13 +150,14 @@ class UpstageUniversalInformationExtraction(BaseModel):
             ).chat.completions
         return self
 
-    def information_extract(
+    def extract(
             self,
             img_paths: list[str],
-            response_format: Optional[dict]=None
+            response_format: Dict,
     ):
+
         contents = [
-            create_message(_process_input(img_path))
+            create_message(img_path, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
             for img_path in img_paths
         ]
 
@@ -203,29 +168,8 @@ class UpstageUniversalInformationExtraction(BaseModel):
             }
         ]
 
-        if response_format is None:
-            response_format = self._schema_generate(messages)
-
         return self.client.create(
             model=self.model_name,
             messages=messages,
-            response_format=response_format
+            response_format=response_format,
         )
-
-    def _schema_generate(self, messages):
-        headers = (self.default_headers or {}) | {
-            "Authorization": f"Bearer {self.upstage_api_key.get_secret_value()}"
-        }
-
-        body = {
-            "model": self.model_name,
-            "messages": messages,
-        }
-
-        response = requests.post(
-            self.base_url + "/schema-generation",
-            headers=headers,
-            json=body
-        )
-
-        return json.loads(response.json()["choices"][0]["message"]["content"])
