@@ -84,10 +84,11 @@ class UpstageDocumentParseLoader(BaseLoader):
         api_key: Optional[str] = None,
         base_url: str = DOCUMENT_PARSE_BASE_URL,
         model: str = DOCUMENT_PARSE_DEFAULT_MODEL,
+        chart_recognition: bool = True,
         ocr: OCR = "auto",
         output_format: OutputFormat = "html",
         coordinates: bool = True,
-        base64_encoding: List[Category] = [],
+        base64_encoding: Optional[List[Category]] = None,
     ):
         """
         Initializes an instance of the Upstage document parse loader.
@@ -126,10 +127,11 @@ class UpstageDocumentParseLoader(BaseLoader):
         )
         self.base_url = base_url
         self.model = model
+        self.chart_recognition = chart_recognition
         self.ocr = ocr
         self.output_format = output_format
         self.coordinates = coordinates
-        self.base64_encoding = base64_encoding
+        self.base64_encoding = base64_encoding if base64_encoding is not None else []
         self.parser = UpstageDocumentParseParser(
             api_key=self.api_key,
             base_url=self.base_url,
