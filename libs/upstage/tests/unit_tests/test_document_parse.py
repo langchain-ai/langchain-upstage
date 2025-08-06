@@ -77,7 +77,7 @@ def test_document_parse_param(
     assert loader.output_format == output_format
 
 
-@patch("requests.post")
+@patch("requests.request")
 @pytest.mark.parametrize("split", get_args(SplitType))
 @pytest.mark.parametrize("output_format", get_args(OutputFormat))
 def test_document_parse_output(
@@ -102,7 +102,7 @@ def test_document_parse_output(
     )
 
 
-@patch("requests.post")
+@patch("requests.request")
 def test_request_exception(mock_post: Mock) -> None:
     mock_post.side_effect = requests.RequestException("Mocked request exception")
 
@@ -119,7 +119,7 @@ def test_request_exception(mock_post: Mock) -> None:
     assert "Failed to send request: Mocked request exception" == str(context.exception)
 
 
-@patch("requests.post")
+@patch("requests.request")
 def test_json_decode_error(mock_post: Mock) -> None:
     mock_response = Mock()
     mock_response.status_code = 200
