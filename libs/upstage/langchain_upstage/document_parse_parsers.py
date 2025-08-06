@@ -181,7 +181,7 @@ class UpstageDocumentParseParser(BaseBlobParser):
             "POST",
             self.base_url,
             self.api_key,
-            headers = self._get_headers(),
+            headers=self._get_headers(),
             files=files,
             data={
                 "model": self.model,
