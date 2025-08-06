@@ -8,7 +8,6 @@ EXPECTED_ALL = [
     "UpstageGroundednessCheck",
     "GroundednessCheck",
     "UpstageUniversalInformationExtraction",
-    "UpstageUniversalSchemaGeneration",
     "UpstagePrebuiltInformationExtraction",
 ]
 
