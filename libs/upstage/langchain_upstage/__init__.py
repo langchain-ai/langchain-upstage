@@ -12,9 +12,6 @@ from langchain_upstage.tools.groundedness_check import (
 from langchain_upstage.universal_information_extraction import (
     UpstageUniversalInformationExtraction,
 )
-from langchain_upstage.universal_schema_generation import (
-    UpstageUniversalSchemaGeneration,
-)
 
 __all__ = [
     "ChatUpstage",
@@ -24,6 +21,5 @@ __all__ = [
     "UpstageGroundednessCheck",
     "GroundednessCheck",
     "UpstageUniversalInformationExtraction",
-    "UpstageUniversalSchemaGeneration",
     "UpstagePrebuiltInformationExtraction",
 ]
