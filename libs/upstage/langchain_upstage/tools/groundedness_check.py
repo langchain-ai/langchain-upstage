@@ -56,7 +56,7 @@ class UpstageGroundednessCheck(BaseTool):
 
     args_schema: Type[BaseModel] = UpstageGroundednessCheckInput
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, temperature:Optional[int] = None, **kwargs: Any) -> None:
         upstage_api_key = kwargs.get("upstage_api_key", None)
         if not upstage_api_key:
             upstage_api_key = kwargs.get("api_key", None)
@@ -74,6 +74,7 @@ class UpstageGroundednessCheck(BaseTool):
         api_wrapper = ChatUpstage(
             model="groundedness-check",
             api_key=upstage_api_key.get_secret_value(),
+            temperature=temperature,
         )
         super().__init__(upstage_api_key=upstage_api_key, api_wrapper=api_wrapper)
 
