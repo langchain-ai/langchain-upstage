@@ -56,7 +56,7 @@ class UpstageUniversalInformationExtraction:
         )
         self.base_url = base_url
 
-    def information_extraction(
+    def extract(
         self,
         img_paths: list[str],
         response_format: dict,
@@ -88,7 +88,7 @@ class UpstageUniversalInformationExtraction:
             },
         )
 
-    def schema_generation(self, img_paths: list[str]) -> dict:
+    def generate_schema(self, img_paths: list[str]) -> dict:
         contents = [
             create_message(img_path, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
             for img_path in img_paths

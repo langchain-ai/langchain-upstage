@@ -62,7 +62,7 @@ class UpstagePrebuiltInformationExtraction:
         )
         self.base_url = base_url
 
-    def information_extract(self, file_path: str) -> dict:
+    def extract(self, file_path: str) -> dict:
         valid_extension(file_path, SUPPORTED_EXTENSIONS)
 
         files = {"document": open(file_path, "rb")}
