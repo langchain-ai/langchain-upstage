@@ -62,10 +62,10 @@ class UpstagePrebuiltInformationExtraction:
         )
         self.base_url = base_url
 
-    def extract(self, file_path: str) -> dict:
-        validate_extension(file_path, SUPPORTED_EXTENSIONS)
+    def extract(self, filename: str) -> dict:
+        validate_extension(filename, SUPPORTED_EXTENSIONS)
 
-        files = {"document": open(file_path, "rb")}
+        files = {"document": open(filename, "rb")}
         data = {"model": self.model_name}
 
         return make_request("POST", self.base_url, self.api_key, files=files, data=data)
