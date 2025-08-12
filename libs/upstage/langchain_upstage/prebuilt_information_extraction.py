@@ -44,7 +44,7 @@ class UpstagePrebuiltInformationExtraction:
 
             from langchain_upstage import UpstagePrebuiltInformationExtraction
 
-            model = UpstagePrebuiltInformationExtraction(model='information-extract')
+            model = UpstagePrebuiltInformationExtraction(model='receipt-extraction')
     """
 
     def __init__(
