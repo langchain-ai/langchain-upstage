@@ -6,7 +6,7 @@ from typing import (
     Optional,
 )
 
-from langchain_upstage.tools.information_extraction_check import valid_extension
+from langchain_upstage.tools.information_extraction_check import validate_extension
 from langchain_upstage.tools.response_generator import make_request
 from langchain_upstage.tools.value_retriever import get_from_param_or_env
 
@@ -63,7 +63,7 @@ class UpstagePrebuiltInformationExtraction:
         self.base_url = base_url
 
     def extract(self, file_path: str) -> dict:
-        valid_extension(file_path, SUPPORTED_EXTENSIONS)
+        validate_extension(file_path, SUPPORTED_EXTENSIONS)
 
         files = {"document": open(file_path, "rb")}
         data = {"model": self.model_name}

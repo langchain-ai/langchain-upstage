@@ -19,7 +19,7 @@ def _process_input(
     else:
         raise FileNotFoundError(f"File not found: {input_path}")
 
-    valid_extension(input_path, supported_extensions)
+    validate_extension(input_path, supported_extensions)
 
     try:
         with open(input_path, "rb") as img_file:
@@ -31,7 +31,7 @@ def _process_input(
         raise ValueError(f"Error occurred while processing the file: {e}")
 
 
-def valid_extension(input_path: str, supported_extensions: List[str]) -> None:
+def validate_extension(input_path: str, supported_extensions: List[str]) -> None:
     file_ext = input_path.lower().split(".")[-1]
     if file_ext not in supported_extensions:
         supported = ", ".join([f".{ext}" for ext in supported_extensions])
