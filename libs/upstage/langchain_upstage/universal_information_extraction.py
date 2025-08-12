@@ -58,13 +58,13 @@ class UpstageUniversalInformationExtraction:
 
     def extract(
         self,
-        img_paths: list[str],
+        image_urls: list[str],
         response_format: dict,
         pages_per_chunk: int = 5,
     ) -> dict:
         contents = [
-            create_message(img_path, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
-            for img_path in img_paths
+            create_message(image_url, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
+            for image_url in image_urls
         ]
 
         messages = [
@@ -88,10 +88,10 @@ class UpstageUniversalInformationExtraction:
             },
         )
 
-    def generate_schema(self, img_paths: list[str]) -> dict:
+    def generate_schema(self, image_urls: list[str]) -> dict:
         contents = [
-            create_message(img_path, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
-            for img_path in img_paths
+            create_message(image_url, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
+            for image_url in image_urls
         ]
 
         messages = [{"role": "user", "content": contents}]
