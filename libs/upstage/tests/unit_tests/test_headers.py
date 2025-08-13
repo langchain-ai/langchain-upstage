@@ -1,20 +1,22 @@
 import os
-from unittest.mock import Mock, patch
-import pytest
 from pathlib import Path
+from typing import Generator
+from unittest.mock import Mock, patch
 
-from langchain_upstage import ChatUpstage, UpstageEmbeddings, UpstageDocumentParseLoader
+import pytest
+
+from langchain_upstage import ChatUpstage, UpstageDocumentParseLoader, UpstageEmbeddings
 
 
 @pytest.fixture
-def mock_api_key():
+def mock_api_key() -> Generator[str, None, None]:
     """Provide a mock API key for testing and restore original after test."""
     original_api_key = os.environ.get("UPSTAGE_API_KEY")
     test_api_key = "test_api_key_12345"
     os.environ["UPSTAGE_API_KEY"] = test_api_key
-    
+
     yield test_api_key
-    
+
     if original_api_key is not None:
         os.environ["UPSTAGE_API_KEY"] = original_api_key
     else:
@@ -22,86 +24,99 @@ def mock_api_key():
 
 
 @pytest.fixture
-def temp_pdf_file(tmp_path):
+def temp_pdf_file(tmp_path: Path) -> Path:
     """Create a minimal PDF file for testing."""
     pdf_path = tmp_path / "test_document.pdf"
-    
+
     # Minimal PDF content (just enough to be recognized as PDF)
     minimal_pdf_content = b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"
-    
+
     pdf_path.write_bytes(minimal_pdf_content)
     return pdf_path
 
 
 class TestChatUpstageHeaders:
-    """Test that ChatUpstage correctly sets and passes default headers to OpenAI client."""
-    
-    def test_default_headers_are_set_correctly(self, mock_api_key):
+    """Test that ChatUpstage correctly sets and passes default headers."""
+
+    def test_default_headers_are_set_correctly(self, mock_api_key: str) -> None:
         """Test that ChatUpstage sets the correct default headers."""
         # Arrange & Act
         chat_model = ChatUpstage(model="solar-pro2")
-        
+
         # Assert
         assert chat_model.default_headers == {"x-upstage-client": "langchain"}
-    
-    def test_x_upstage_client_header_is_protected(self, mock_api_key):
-        """Test that x-upstage-client header cannot be overridden and always remains "langchain"."""
+
+    def test_x_upstage_client_header_is_protected(self, mock_api_key: str) -> None:
+        """Test that x-upstage-client header cannot be overridden."""
         # Arrange
-        custom_headers = {"x-upstage-client": "custom-client", "x-custom-header": "value"}
-        
+        custom_headers = {
+            "x-upstage-client": "custom-client",
+            "x-custom-header": "value",
+        }
+
         # Act
         chat_model = ChatUpstage(model="solar-pro2", default_headers=custom_headers)
-        
+
         # Assert
+        assert chat_model.default_headers is not None
         assert chat_model.default_headers["x-upstage-client"] == "langchain"
         assert chat_model.default_headers["x-custom-header"] == "value"
-    
-    def test_custom_headers_without_x_upstage_client(self, mock_api_key):
+
+    def test_custom_headers_without_x_upstage_client(self, mock_api_key: str) -> None:
         """Test that custom headers without x-upstage-client work correctly."""
         # Arrange
-        custom_headers = {"x-custom-header": "value", "x-another-header": "another-value"}
-        
+        custom_headers = {
+            "x-custom-header": "value",
+            "x-another-header": "another-value",
+        }
+
         # Act
         chat_model = ChatUpstage(model="solar-pro2", default_headers=custom_headers)
-        
+
         # Assert
+        assert chat_model.default_headers is not None
         assert chat_model.default_headers["x-upstage-client"] == "langchain"
         assert chat_model.default_headers["x-custom-header"] == "value"
         assert chat_model.default_headers["x-another-header"] == "another-value"
-    
-    def test_none_default_headers(self, mock_api_key):
+
+    def test_none_default_headers(self, mock_api_key: str) -> None:
         """Test that None default_headers are handled correctly."""
         # Arrange & Act
         chat_model = ChatUpstage(model="solar-pro2", default_headers=None)
-        
+
         # Assert
+        assert chat_model.default_headers is not None
         assert chat_model.default_headers["x-upstage-client"] == "langchain"
-    
-    @patch('openai.OpenAI')
-    def test_default_headers_passed_to_sync_client(self, mock_openai_class, mock_api_key):
-        """Test that default headers are passed to OpenAI sync client during initialization."""
+
+    @patch("openai.OpenAI")
+    def test_default_headers_passed_to_sync_client(
+        self, mock_openai_class: Mock, mock_api_key: str
+    ) -> None:
+        """Test that default headers are passed to OpenAI sync client."""
         # Arrange
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
-        
+
         # Act
         ChatUpstage(model="solar-pro2")
-        
+
         # Assert
         mock_openai_class.assert_called_once()
         call_args = mock_openai_class.call_args[1]  # kwargs
         assert call_args["default_headers"] == {"x-upstage-client": "langchain"}
-    
-    @patch('openai.AsyncOpenAI')
-    def test_default_headers_passed_to_async_client(self, mock_async_openai_class, mock_api_key):
-        """Test that default headers are passed to OpenAI async client during initialization."""
+
+    @patch("openai.AsyncOpenAI")
+    def test_default_headers_passed_to_async_client(
+        self, mock_async_openai_class: Mock, mock_api_key: str
+    ) -> None:
+        """Test that default headers are passed to OpenAI async client."""
         # Arrange
         mock_client = Mock()
         mock_async_openai_class.return_value = mock_client
-        
+
         # Act
         ChatUpstage(model="solar-pro2")
-        
+
         # Assert
         mock_async_openai_class.assert_called_once()
         call_args = mock_async_openai_class.call_args[1]  # kwargs
@@ -110,73 +125,92 @@ class TestChatUpstageHeaders:
 
 class TestUpstageEmbeddingsHeaders:
     """Test that UpstageEmbeddings correctly sets and passes default headers."""
-    
-    def test_default_headers_are_set_correctly(self, mock_api_key):
+
+    def test_default_headers_are_set_correctly(self, mock_api_key: str) -> None:
         """Test that UpstageEmbeddings sets the correct default headers."""
         # Arrange & Act
         embeddings = UpstageEmbeddings(model="solar-embedding-1-large")
-        
+
         # Assert
         assert embeddings.default_headers == {"x-upstage-client": "langchain"}
-    
-    def test_x_upstage_client_header_is_protected(self, mock_api_key):
-        """Test that x-upstage-client header cannot be overridden and always remains "langchain"."""
+
+    def test_x_upstage_client_header_is_protected(self, mock_api_key: str) -> None:
+        """Test that x-upstage-client header cannot be overridden."""
         # Arrange
-        custom_headers = {"x-upstage-client": "custom-client", "x-custom-header": "value"}
-        
+        custom_headers = {
+            "x-upstage-client": "custom-client",
+            "x-custom-header": "value",
+        }
+
         # Act
-        embeddings = UpstageEmbeddings(model="solar-embedding-1-large", default_headers=custom_headers)
-        
+        embeddings = UpstageEmbeddings(
+            model="solar-embedding-1-large", default_headers=custom_headers
+        )
+
         # Assert
+        assert embeddings.default_headers is not None
         assert embeddings.default_headers["x-upstage-client"] == "langchain"
         assert embeddings.default_headers["x-custom-header"] == "value"
-    
-    def test_custom_headers_without_x_upstage_client(self, mock_api_key):
+
+    def test_custom_headers_without_x_upstage_client(self, mock_api_key: str) -> None:
         """Test that custom headers without x-upstage-client work correctly."""
         # Arrange
-        custom_headers = {"x-custom-header": "value", "x-another-header": "another-value"}
-        
+        custom_headers = {
+            "x-custom-header": "value",
+            "x-another-header": "another-value",
+        }
+
         # Act
-        embeddings = UpstageEmbeddings(model="solar-embedding-1-large", default_headers=custom_headers)
-        
+        embeddings = UpstageEmbeddings(
+            model="solar-embedding-1-large", default_headers=custom_headers
+        )
+
         # Assert
+        assert embeddings.default_headers is not None
         assert embeddings.default_headers["x-upstage-client"] == "langchain"
         assert embeddings.default_headers["x-custom-header"] == "value"
         assert embeddings.default_headers["x-another-header"] == "another-value"
-    
-    def test_none_default_headers(self, mock_api_key):
+
+    def test_none_default_headers(self, mock_api_key: str) -> None:
         """Test that None default_headers are handled correctly."""
         # Arrange & Act
-        embeddings = UpstageEmbeddings(model="solar-embedding-1-large", default_headers=None)
-        
+        embeddings = UpstageEmbeddings(
+            model="solar-embedding-1-large", default_headers=None
+        )
+
         # Assert
+        assert embeddings.default_headers is not None
         assert embeddings.default_headers["x-upstage-client"] == "langchain"
-    
-    @patch('openai.OpenAI')
-    def test_default_headers_passed_to_sync_client(self, mock_openai_class, mock_api_key):
-        """Test that default headers are passed to OpenAI sync client during initialization."""
+
+    @patch("openai.OpenAI")
+    def test_default_headers_passed_to_sync_client(
+        self, mock_openai_class: Mock, mock_api_key: str
+    ) -> None:
+        """Test that default headers are passed to OpenAI sync client."""
         # Arrange
         mock_client = Mock()
         mock_openai_class.return_value = mock_client
-        
+
         # Act
         UpstageEmbeddings(model="solar-embedding-1-large")
-        
+
         # Assert
         mock_openai_class.assert_called_once()
         call_args = mock_openai_class.call_args[1]  # kwargs
         assert call_args["default_headers"] == {"x-upstage-client": "langchain"}
-    
-    @patch('openai.AsyncOpenAI')
-    def test_default_headers_passed_to_async_client(self, mock_async_openai_class, mock_api_key):
-        """Test that default headers are passed to OpenAI async client during initialization."""
+
+    @patch("openai.AsyncOpenAI")
+    def test_default_headers_passed_to_async_client(
+        self, mock_async_openai_class: Mock, mock_api_key: str
+    ) -> None:
+        """Test that default headers are passed to OpenAI async client."""
         # Arrange
         mock_client = Mock()
         mock_async_openai_class.return_value = mock_client
-        
+
         # Act
         UpstageEmbeddings(model="solar-embedding-1-large")
-        
+
         # Assert
         mock_async_openai_class.assert_called_once()
         call_args = mock_async_openai_class.call_args[1]  # kwargs
@@ -184,25 +218,26 @@ class TestUpstageEmbeddingsHeaders:
 
 
 class TestUpstageDocumentParseLoaderHeaders:
-    """Test that UpstageDocumentParseLoader correctly includes x-upstage-client header in HTTP requests."""
-    
-    def test_headers_in_http_request(self, mock_api_key, temp_pdf_file):
-        """Test that x-upstage-client header is included in HTTP requests when using document parse loader."""
+    """Test that loader correctly includes x-upstage-client header."""
+
+    def test_headers_in_http_request(
+        self, mock_api_key: str, temp_pdf_file: Path
+    ) -> None:
+        """Test that x-upstage-client header is included in HTTP requests."""
         # Arrange
         loader = UpstageDocumentParseLoader(
-            file_path=temp_pdf_file,
-            api_key=mock_api_key
+            file_path=temp_pdf_file, api_key=mock_api_key
         )
-        
+
         # Act
-        with patch('requests.post') as mock_post:
+        with patch("requests.post") as mock_post:
             mock_response = Mock()
             mock_response.json.return_value = {"elements": []}
             mock_post.return_value = mock_response
-            
+
             # This triggers the actual document parsing flow through public interface
             loader.load()
-        
+
         # Assert
         mock_post.assert_called()
         headers = mock_post.call_args[1]["headers"]  # kwargs["headers"]

@@ -151,7 +151,7 @@ class UpstageDocumentParseParser(BaseBlobParser):
     def _get_headers(self) -> Dict[str, str]:
         """
         Get headers for API requests with x-upstage-client always set to "langchain".
-        
+
         Returns:
             Dict containing Authorization and x-upstage-client headers.
         """
