@@ -61,6 +61,9 @@ class UpstageUniversalInformationExtraction:
         image_urls: list[str],
         response_format: dict,
         pages_per_chunk: int = 5,
+        confidence: bool = True,
+        doc_split: bool = False,
+        location: bool = False,
     ) -> dict:
         contents = [
             create_message(image_url, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
@@ -85,6 +88,9 @@ class UpstageUniversalInformationExtraction:
                 "chunking": {
                     "pages_per_chunk": pages_per_chunk,
                 },
+                "confidence": confidence,
+                "doc_split": doc_split,
+                "location": location,
             },
         )
 
