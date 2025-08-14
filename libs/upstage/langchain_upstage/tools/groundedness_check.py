@@ -78,7 +78,7 @@ class UpstageGroundednessCheck(BaseTool):
         )
         super().__init__(upstage_api_key=upstage_api_key, api_wrapper=api_wrapper)
 
-    def formatDocumentsAsString(self, docs: List[Document]) -> str:
+    def format_documents_as_string(self, docs: List[Document]) -> str:
         return "\n".join([doc.page_content for doc in docs])
 
     def _run(
@@ -89,7 +89,7 @@ class UpstageGroundednessCheck(BaseTool):
     ) -> Union[str, Literal["grounded", "notGrounded", "notSure"]]:
         """Use the tool."""
         if isinstance(context, List):
-            context = self.formatDocumentsAsString(context)
+            context = self.format_documents_as_string(context)
         api_wrapper = cast(ChatUpstage, self.api_wrapper)
         response = api_wrapper.invoke(
             [HumanMessage(context), AIMessage(answer)], stream=False
@@ -103,7 +103,7 @@ class UpstageGroundednessCheck(BaseTool):
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> Union[str, Literal["grounded", "notGrounded", "notSure"]]:
         if isinstance(context, List):
-            context = self.formatDocumentsAsString(context)
+            context = self.format_documents_as_string(context)
         api_wrapper = cast(ChatUpstage, self.api_wrapper)
         response = await api_wrapper.ainvoke(
             [HumanMessage(context), AIMessage(answer)], stream=False
