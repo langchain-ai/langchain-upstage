@@ -60,7 +60,7 @@ class UpstageGroundednessCheck(BaseTool):
 
     args_schema: Type[BaseModel] = UpstageGroundednessCheckInput
 
-    def __init__(self, temperature: Optional[int] = None, **kwargs: Any) -> None:
+    def __init__(self, temperature: Optional[float] = None, **kwargs: Any) -> None:
         upstage_api_key = kwargs.get("upstage_api_key", None)
         if not upstage_api_key:
             upstage_api_key = kwargs.get("api_key", None)
