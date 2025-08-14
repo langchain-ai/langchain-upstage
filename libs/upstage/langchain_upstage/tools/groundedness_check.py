@@ -77,7 +77,7 @@ class UpstageGroundednessCheck(BaseTool):
 
         api_wrapper = ChatUpstage(
             model="groundedness-check",
-            api_key=upstage_api_key.get_secret_value(),
+            api_key=upstage_api_key,
             temperature=temperature,
         )
         super().__init__(upstage_api_key=upstage_api_key, api_wrapper=api_wrapper)
