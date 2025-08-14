@@ -1,13 +1,12 @@
-import json
+import os
 from pathlib import Path
-from typing import Any, Dict, get_args
-from unittest import TestCase
-from unittest.mock import MagicMock, Mock, patch
+from typing import Generator, get_args
+from unittest.mock import Mock
 
 import pytest
-import requests
+from langchain_core.documents import Document
 
-from langchain_upstage.document_parse import UpstageDocumentParseLoader
+from langchain_upstage import UpstageDocumentParseLoader
 from langchain_upstage.document_parse_parsers import (
     OCR,
     Category,
@@ -15,128 +14,148 @@ from langchain_upstage.document_parse_parsers import (
     SplitType,
 )
 
-MOCK_RESPONSE_JSON: Dict[str, Any] = {
-    "api": "2.0",
-    "model": "document-parse-1.0.0",
-    "elements": [
-        {
-            "id": 0,
-            "coordinates": {
-                "x": 0.123,
-                "y": 0.321,
-            },
-            "category": "header",
-            "content": {
-                "html": "arXiv:2103.15348v2",
-                "markdown": "arXiv:2103.15348v2",
-                "text": "arXiv:2103.15348v2",
-            },
-            "page": 1,
-            "base64_encoding": "string",
-        },
-    ],
-    "content": {
-        "text": "arXiv:2103.15348v2LayoutParser Toolkit",
-        "html": "arXiv:2103.15348v2",
-        "markdown": "arXiv:2103.15348v2",
-    },
-    "usage": {
-        "pages": 1,
-    },
-}
 
-EXAMPLE_PDF_PATH = Path(__file__).parent.parent / "examples/solar.pdf"
+@pytest.fixture
+def mock_api_key() -> Generator[str, None, None]:
+    """Provide a mock API key for testing and restore original after test."""
+    original_api_key = os.environ.get("UPSTAGE_API_KEY")
+    test_api_key = "test_api_key_12345"
+    os.environ["UPSTAGE_API_KEY"] = test_api_key
+
+    yield test_api_key
+
+    if original_api_key is not None:
+        os.environ["UPSTAGE_API_KEY"] = original_api_key
+    else:
+        os.environ.pop("UPSTAGE_API_KEY", None)
 
 
-def test_initialization() -> None:
-    """Test layout analysis document loader initialization."""
-    UpstageDocumentParseLoader(file_path=EXAMPLE_PDF_PATH, api_key="bar")
+@pytest.fixture
+def no_api_key() -> Generator[None, None, None]:
+    """Temporarily remove UPSTAGE_API_KEY and restore after test."""
+    original_api_key = os.environ.get("UPSTAGE_API_KEY")
+
+    # Remove the API key
+    if "UPSTAGE_API_KEY" in os.environ:
+        del os.environ["UPSTAGE_API_KEY"]
+
+    yield
+
+    # Restore the original API key
+    if original_api_key is not None:
+        os.environ["UPSTAGE_API_KEY"] = original_api_key
 
 
-@pytest.mark.parametrize("output_format", get_args(OutputFormat))
-@pytest.mark.parametrize("split", get_args(SplitType))
-@pytest.mark.parametrize("ocr", get_args(OCR))
-@pytest.mark.parametrize("coordinates", [True, False])
-@pytest.mark.parametrize("base64_encoding", ["header"])
-def test_document_parse_param(
-    output_format: OutputFormat,
-    split: SplitType,
-    ocr: OCR,
-    coordinates: bool,
-    base64_encoding: Category,
-) -> None:
-    loader = UpstageDocumentParseLoader(
-        file_path=EXAMPLE_PDF_PATH,
-        api_key="bar",
-        ocr=ocr,
-        split=split,
-        output_format=output_format,
-        coordinates=coordinates,
-        base64_encoding=[base64_encoding],
-    )
-    assert loader.output_format == output_format
+@pytest.fixture
+def temp_pdf_file(tmp_path: Path) -> Path:
+    """Create a minimal PDF file for testing."""
+    pdf_path = tmp_path / "test_document.pdf"
+
+    # Minimal PDF content (just enough to be recognized as PDF)
+    minimal_pdf_content = b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"
+
+    pdf_path.write_bytes(minimal_pdf_content)
+    return pdf_path
 
 
-@patch("requests.request")
-@pytest.mark.parametrize("split", get_args(SplitType))
-@pytest.mark.parametrize("output_format", get_args(OutputFormat))
-def test_document_parse_output(
-    mock_post: Mock, output_format: OutputFormat, split: SplitType
-) -> None:
-    mock_post.return_value = MagicMock(
-        status_code=200, json=MagicMock(return_value=MOCK_RESPONSE_JSON)
-    )
+class TestUpstageDocumentParseLoader:
+    """Test UpstageDocumentParseLoader."""
 
-    loader = UpstageDocumentParseLoader(
-        file_path=EXAMPLE_PDF_PATH,
-        output_format=output_format,
-        split=split,
-        api_key="valid_api_key",
-    )
-    documents = loader.load()
+    def test_initialization_without_api_key_raises_error(
+        self, temp_pdf_file: Path, no_api_key: None
+    ) -> None:
+        """Test that initialization fails when no API key is provided."""
+        # Act & Assert
+        with pytest.raises(ValueError):
+            UpstageDocumentParseLoader(temp_pdf_file)
 
-    assert len(documents) == 1
-    assert (
-        documents[0].page_content
-        == MOCK_RESPONSE_JSON["elements"][0]["content"][output_format]
-    )
+    def test_initialization_with_nonexistent_file_raises_error(
+        self, mock_api_key: str
+    ) -> None:
+        """Test that initialization fails with non-existent file."""
+        # Act & Assert
+        with pytest.raises(FileNotFoundError):
+            UpstageDocumentParseLoader("nonexistent_file.pdf")
 
+    @pytest.mark.parametrize("output_format", get_args(OutputFormat))
+    @pytest.mark.parametrize("split", get_args(SplitType))
+    @pytest.mark.parametrize("ocr", get_args(OCR))
+    @pytest.mark.parametrize("chart_recognition", [True, False])
+    @pytest.mark.parametrize("coordinates", [True, False])
+    @pytest.mark.parametrize("base64_encoding", [[], ["table"], ["figure", "chart"]])
+    def test_initialization_with_all_parameters(
+        self,
+        temp_pdf_file: Path,
+        no_api_key: None,
+        output_format: OutputFormat,
+        split: SplitType,
+        ocr: OCR,
+        chart_recognition: bool,
+        coordinates: bool,
+        base64_encoding: list[Category],
+    ) -> None:
+        """Test that loader initializes with all parameter combinations."""
+        # Act
+        loader = UpstageDocumentParseLoader(
+            temp_pdf_file,
+            api_key="test_key",
+            output_format=output_format,
+            split=split,
+            ocr=ocr,
+            chart_recognition=chart_recognition,
+            coordinates=coordinates,
+            base64_encoding=base64_encoding,
+        )
 
-@patch("requests.request")
-def test_request_exception(mock_post: Mock) -> None:
-    mock_post.side_effect = requests.RequestException("Mocked request exception")
+        # Assert
+        assert loader.output_format == output_format
+        assert loader.split == split
+        assert loader.ocr == ocr
+        assert loader.chart_recognition == chart_recognition
+        assert loader.coordinates == coordinates
+        assert loader.base64_encoding == base64_encoding
 
-    loader = UpstageDocumentParseLoader(
-        file_path=EXAMPLE_PDF_PATH,
-        output_format="html",
-        split="page",
-        api_key="valid_api_key",
-    )
+    def test_merge_and_split_combines_documents_and_metadata(
+        self, temp_pdf_file: Path, mock_api_key: str
+    ) -> None:
+        """Test that merge_and_split correctly combines documents and metadata."""
+        # Arrange
+        documents = [
+            Document(page_content="Content 1", metadata={"page": 1, "source": "doc1"}),
+            Document(page_content="Content 2", metadata={"page": 2, "source": "doc2"}),
+        ]
+        loader = UpstageDocumentParseLoader(temp_pdf_file)
 
-    with TestCase.assertRaises(TestCase(), ValueError) as context:
-        loader.load()
+        # Act
+        result = loader.merge_and_split(documents)
 
-    assert "Failed to send request: Mocked request exception" == str(context.exception)
+        # Assert
+        assert len(result) == 1
+        assert result[0].page_content == "Content 1 Content 2"
+        assert result[0].metadata["page"] == [1, 2]
+        assert result[0].metadata["source"] == ["doc1", "doc2"]
 
+    def test_merge_and_split_with_splitter_delegates_to_splitter(
+        self, temp_pdf_file: Path, mock_api_key: str
+    ) -> None:
+        """Test that merge_and_split delegates to splitter when provided."""
+        # Arrange
+        documents = [
+            Document(page_content="Content 1", metadata={"page": 1}),
+            Document(page_content="Content 2", metadata={"page": 2}),
+        ]
+        loader = UpstageDocumentParseLoader(temp_pdf_file)
 
-@patch("requests.request")
-def test_json_decode_error(mock_post: Mock) -> None:
-    mock_response = Mock()
-    mock_response.status_code = 200
-    mock_response.json.side_effect = json.JSONDecodeError("Expecting value", "", 0)
-    mock_post.return_value = mock_response
+        # Mock splitter
+        mock_splitter = Mock()
+        mock_splitter.split_documents.return_value = [
+            Document(page_content="Split 1", metadata={"split": 1}),
+            Document(page_content="Split 2", metadata={"split": 2}),
+        ]
 
-    loader = UpstageDocumentParseLoader(
-        file_path=EXAMPLE_PDF_PATH,
-        output_format="html",
-        split="page",
-        api_key="valid_api_key",
-    )
+        # Act
+        result = loader.merge_and_split(documents, mock_splitter)
 
-    with TestCase.assertRaises(TestCase(), ValueError) as context:
-        loader.load()
-
-    assert (
-        "Failed to decode JSON response: Expecting value: line 1 column 1 (char 0)"
-        == str(context.exception)
-    )
+        # Assert
+        assert len(result) == 2
+        mock_splitter.split_documents.assert_called_once_with(documents)
