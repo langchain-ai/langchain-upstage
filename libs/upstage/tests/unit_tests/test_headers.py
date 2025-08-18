@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from langchain_upstage import ChatUpstage, UpstageDocumentParseLoader, UpstageEmbeddings
+from langchain_upstage import ChatUpstage, UpstageEmbeddings
 
 
 @pytest.fixture
@@ -217,29 +217,33 @@ class TestUpstageEmbeddingsHeaders:
         assert call_args["default_headers"] == {"x-upstage-client": "langchain"}
 
 
-class TestUpstageDocumentParseLoaderHeaders:
-    """Test that loader correctly includes x-upstage-client header."""
+class TestUpstageDocumentParseParserHeaders:
+    """Test that UpstageDocumentParseParser correctly sets headers."""
 
-    def test_headers_in_http_request(
+    def test_parser_includes_correct_headers_in_api_request(
         self, mock_api_key: str, temp_pdf_file: Path
     ) -> None:
-        """Test that x-upstage-client header is included in HTTP requests."""
+        """Test that parser includes correct headers when making API requests."""
         # Arrange
-        loader = UpstageDocumentParseLoader(
-            file_path=temp_pdf_file, api_key=mock_api_key
-        )
+        from langchain_upstage.document_parse_parsers import UpstageDocumentParseParser
+
+        parser = UpstageDocumentParseParser(api_key=mock_api_key)
 
         # Act
-        with patch("requests.post") as mock_post:
-            mock_response = Mock()
-            mock_response.json.return_value = {"elements": []}
-            mock_post.return_value = mock_response
+        with patch(
+            "langchain_upstage.document_parse_parsers.make_request"
+        ) as mock_make_request:
+            mock_response: dict[str, list] = {"elements": []}
+            mock_make_request.return_value = mock_response
 
-            # This triggers the actual document parsing flow through public interface
-            loader.load()
+            # Use public interface to trigger API request
+            from langchain_core.document_loaders import Blob
+
+            blob = Blob.from_path(temp_pdf_file)
+            list(parser.lazy_parse(blob))
 
         # Assert
-        mock_post.assert_called()
-        headers = mock_post.call_args[1]["headers"]  # kwargs["headers"]
+        mock_make_request.assert_called()
+        headers = mock_make_request.call_args[1]["headers"]
         assert headers["x-upstage-client"] == "langchain"
         assert headers["Authorization"] == f"Bearer {mock_api_key}"

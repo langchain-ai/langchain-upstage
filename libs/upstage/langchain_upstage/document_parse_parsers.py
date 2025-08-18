@@ -4,11 +4,12 @@ import logging
 import os
 from typing import Any, Dict, Iterator, List, Literal, Optional
 
-import requests
 from langchain_core.document_loaders import BaseBlobParser, Blob
 from langchain_core.documents import Document
 from pypdf import PdfReader, PdfWriter
 from pypdf.errors import PdfReadError
+
+from langchain_upstage.tools.response_generator import make_request
 
 logger = logging.getLogger("pypdf")
 logger.setLevel(logging.ERROR)
@@ -21,18 +22,18 @@ OutputFormat = Literal["text", "html", "markdown"]
 OCR = Literal["auto", "force"]
 SplitType = Literal["none", "page", "element"]
 Category = Literal[
-    "paragraph",
     "table",
     "figure",
+    "chart",
+    "heading1",
     "header",
     "footer",
     "caption",
+    "paragraph",
     "equation",
-    "heading1",
     "list",
     "index",
     "footnote",
-    "chart",
 ]
 
 
@@ -103,10 +104,11 @@ class UpstageDocumentParseParser(BaseBlobParser):
         base_url: str = DOCUMENT_PARSE_BASE_URL,
         model: str = DOCUMENT_PARSE_DEFAULT_MODEL,
         split: SplitType = "none",
+        chart_recognition: bool = True,
         ocr: OCR = "auto",
         output_format: OutputFormat = "html",
         coordinates: bool = True,
-        base64_encoding: List[Category] = [],
+        base64_encoding: Optional[List[Category]] = None,
     ):
         """
         Initializes an instance of the Upstage class.
@@ -143,10 +145,11 @@ class UpstageDocumentParseParser(BaseBlobParser):
         self.base_url = base_url
         self.model = model
         self.split = split
+        self.chart_recognition = chart_recognition
         self.ocr = ocr
         self.output_format = output_format
         self.coordinates = coordinates
-        self.base64_encoding = base64_encoding
+        self.base64_encoding = base64_encoding if base64_encoding is not None else []
 
     def _get_headers(self) -> Dict[str, str]:
         """
@@ -174,34 +177,23 @@ class UpstageDocumentParseParser(BaseBlobParser):
         Raises:
             ValueError: If there is an error in the API call.
         """
-        try:
-            headers = self._get_headers()
-            response = requests.post(
-                self.base_url,
-                headers=headers,
-                files=files,
-                data={
-                    "ocr": self.ocr,
-                    "model": self.model,
-                    "output_formats": f"['{self.output_format}']",
-                    "coordinates": self.coordinates,
-                    "base64_encoding": f"{self.base64_encoding}",
-                },
-            )
-            response.raise_for_status()
-            result = response.json().get("elements", [])
-            return result
-        except requests.HTTPError as e:
-            raise ValueError(f"HTTP error: {e.response.text}")
-        except requests.RequestException as e:
-            # Handle any request-related exceptions
-            raise ValueError(f"Failed to send request: {e}")
-        except json.JSONDecodeError as e:
-            # Handle JSON decode errors
-            raise ValueError(f"Failed to decode JSON response: {e}")
-        except Exception as e:
-            # Handle any other exceptions
-            raise ValueError(f"An error occurred: {e}")
+        response = make_request(
+            "POST",
+            self.base_url,
+            self.api_key,
+            headers=self._get_headers(),
+            files=files,
+            data={
+                "model": self.model,
+                "chart_recognition": self.chart_recognition,
+                "ocr": self.ocr,
+                "output_formats": f"['{self.output_format}']",
+                "coordinates": self.coordinates,
+                "base64_encoding": json.dumps(self.base64_encoding),
+            },
+        )
+
+        return response.get("elements", [])
 
     def _split_and_request(
         self,
