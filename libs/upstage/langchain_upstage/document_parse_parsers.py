@@ -148,6 +148,18 @@ class UpstageDocumentParseParser(BaseBlobParser):
         self.coordinates = coordinates
         self.base64_encoding = base64_encoding
 
+    def _get_headers(self) -> Dict[str, str]:
+        """
+        Get headers for API requests with x-upstage-client always set to "langchain".
+
+        Returns:
+            Dict containing Authorization and x-upstage-client headers.
+        """
+        return {
+            "Authorization": f"Bearer {self.api_key}",
+            "x-upstage-client": "langchain",
+        }
+
     def _get_response(self, files: Dict) -> List:
         """
         Sends a POST request to the API endpoint with the provided files and
@@ -163,10 +175,7 @@ class UpstageDocumentParseParser(BaseBlobParser):
             ValueError: If there is an error in the API call.
         """
         try:
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "x-upstage-client": "langchain",
-            }
+            headers = self._get_headers()
             response = requests.post(
                 self.base_url,
                 headers=headers,

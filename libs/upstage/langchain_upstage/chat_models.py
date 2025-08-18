@@ -61,6 +61,11 @@ SOLAR_TOKENIZERS = {
     "solar-mini": "upstage/solar-1-mini-tokenizer",
 }
 
+# Constants for header management
+UPSTAGE_CLIENT_HEADER = "x-upstage-client"
+UPSTAGE_CLIENT_VALUE = "langchain"
+DEFAULT_HEADERS = {UPSTAGE_CLIENT_HEADER: UPSTAGE_CLIENT_VALUE}
+
 
 class ChatUpstage(BaseChatOpenAI):
     """ChatUpstage chat model.
@@ -138,7 +143,7 @@ class ChatUpstage(BaseChatOpenAI):
     """tiktoken is not supported for upstage."""
     tokenizer_name: Optional[str] = "upstage/solar-pro-tokenizer"
     """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-tokenizer"""
-    default_headers: Union[Mapping[str, str], None] = {"x-upstage-client": "langchain"}
+    default_headers: Union[Mapping[str, str], None] = DEFAULT_HEADERS
     """add trace header."""
 
     @model_validator(mode="after")
@@ -148,6 +153,15 @@ class ChatUpstage(BaseChatOpenAI):
             raise ValueError("n must be at least 1.")
         if self.n is not None and self.n > 1 and self.streaming:
             raise ValueError("n must be 1 when streaming.")
+
+        # Ensure x-upstage-client header is always set to "langchain"
+        if self.default_headers is None:
+            self.default_headers = DEFAULT_HEADERS
+        else:
+            # Create a copy to avoid modifying the original
+            headers = dict(self.default_headers)
+            headers[UPSTAGE_CLIENT_HEADER] = UPSTAGE_CLIENT_VALUE
+            self.default_headers = headers
 
         client_params: dict = {
             "api_key": (
