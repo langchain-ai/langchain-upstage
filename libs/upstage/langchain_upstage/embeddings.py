@@ -32,6 +32,11 @@ logger = logging.getLogger(__name__)
 DEFAULT_EMBED_BATCH_SIZE = 10
 MAX_EMBED_BATCH_SIZE = 100
 
+# Constants for header management
+UPSTAGE_CLIENT_HEADER = "x-upstage-client"
+UPSTAGE_CLIENT_VALUE = "langchain"
+DEFAULT_HEADERS = {UPSTAGE_CLIENT_HEADER: UPSTAGE_CLIENT_VALUE}
+
 
 class UpstageEmbeddings(BaseModel, Embeddings):
     """UpstageEmbeddings embedding model.
@@ -111,7 +116,7 @@ class UpstageEmbeddings(BaseModel, Embeddings):
     Defaults to not skipping.
     
     Not yet supported."""
-    default_headers: Union[Mapping[str, str], None] = {"x-upstage-client": "langchain"}
+    default_headers: Union[Mapping[str, str], None] = DEFAULT_HEADERS
     """add trace header."""
     default_query: Union[Mapping[str, object], None] = None
     # Configure a custom httpx client. See the
@@ -160,6 +165,15 @@ class UpstageEmbeddings(BaseModel, Embeddings):
     @model_validator(mode="after")
     def validate_environment(self) -> Self:
         """Validate that api key and python package exists in environment."""
+
+        # Ensure x-upstage-client header is always set to "langchain"
+        if self.default_headers is None:
+            self.default_headers = DEFAULT_HEADERS
+        else:
+            # Create a copy to avoid modifying the original
+            headers = dict(self.default_headers)
+            headers[UPSTAGE_CLIENT_HEADER] = UPSTAGE_CLIENT_VALUE
+            self.default_headers = headers
 
         client_params: dict = {
             "api_key": (
