@@ -54,10 +54,9 @@ from typing_extensions import Self
 
 from langchain_upstage.document_parse import UpstageDocumentParseLoader
 
-DOC_PARSING_MODEL = ["solar-pro2", "solar-pro"]
+DOC_PARSING_MODEL = ["solar-pro2"]
 SOLAR_TOKENIZERS = {
     "solar-pro2": "upstage/solar-pro2-tokenizer",
-    "solar-pro": "upstage/solar-pro-tokenizer",
     "solar-mini": "upstage/solar-1-mini-tokenizer",
 }
 
@@ -141,7 +140,7 @@ class ChatUpstage(BaseChatOpenAI):
     """openai organization is not supported for upstage."""
     tiktoken_model_name: Optional[str] = None
     """tiktoken is not supported for upstage."""
-    tokenizer_name: Optional[str] = "upstage/solar-pro-tokenizer"
+    tokenizer_name: Optional[str] = "upstage/solar-pro2-tokenizer"
     """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-tokenizer"""
     default_headers: Union[Mapping[str, str], None] = DEFAULT_HEADERS
     """add trace header."""
