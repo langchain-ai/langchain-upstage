@@ -42,7 +42,6 @@ from langchain_core.utils import from_env, secret_from_env
 from langchain_core.utils.function_calling import convert_to_openai_tool
 from langchain_openai.chat_models.base import (
     BaseChatOpenAI,
-    _AllReturnType,
     _convert_message_to_dict,
     _DictOrPydantic,
     _DictOrPydanticClass,
@@ -334,7 +333,7 @@ class ChatUpstage(BaseChatOpenAI):
         *,
         include_raw: Literal[True] = True,
         **kwargs: Any,
-    ) -> Runnable[LanguageModelInput, _AllReturnType]:
+    ) -> Runnable[LanguageModelInput, _DictOrPydantic]:
         ...
 
     @overload
