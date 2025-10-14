@@ -16,7 +16,7 @@ pypdf = "^4.2.0"
 requests = "^2.31.0"
 tokenizers = "^0.20.0"
 langchain-openai = "^0.3.34"
-langchain-core = "^0.3.29"
+langchain-core = "^0.3.78"
 
 [tool.poetry.group.test]
 optional = true
