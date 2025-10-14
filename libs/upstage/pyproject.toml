@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "langchain-upstage"
-version = "0.7.3"
+version = "0.7.4rc0"
 description = "An integration package connecting Upstage and LangChain"
 authors = []
 readme = "README.md"
