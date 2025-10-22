@@ -219,8 +219,8 @@ class UpstageDocumentParseLoader(BaseLoader):
 
             return [Document(page_content=merged_content, metadata=metadatas)]
         else:
-            assert hasattr(splitter, "split_documents"), (
-                "splitter must implement split_documents method"
-            )
+            assert hasattr(
+                splitter, "split_documents"
+            ), "splitter must implement split_documents method"
 
             return splitter.split_documents(documents)
