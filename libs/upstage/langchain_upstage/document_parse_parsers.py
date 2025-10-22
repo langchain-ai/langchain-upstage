@@ -169,7 +169,7 @@ class UpstageDocumentParseParser(BaseBlobParser):
         returns the response.
 
         Args:
-            files (dict): A dictionary containing the files to be sent in the request.
+            files: the files to be sent in the request.
 
         Returns:
             dict: The JSON response from the API.
@@ -262,13 +262,13 @@ class UpstageDocumentParseParser(BaseBlobParser):
         Combines elements with the same page number into a single Document object.
 
         Args:
-            elements (List): A list of elements containing page numbers.
-            start_page (int): The starting page number for splitting the document.
-                              This number starts from zero.
+            elements: A list of elements containing page numbers.
+            start_page: The starting page number for splitting the document.
+                This number starts from zero.
 
         Returns:
-            List[Document]: A list of Document objects, each representing a page
-                            with its content and metadata.
+            `Document` objects, each representing a page with its content and
+                metadata.
         """
         _docs = []
         pages = sorted(set(map(lambda x: x["page"], elements)))

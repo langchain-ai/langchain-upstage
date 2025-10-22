@@ -147,10 +147,10 @@ class UpstageDocumentParseLoader(BaseLoader):
 
     def load(self) -> List[Document]:
         """
-        Loads and parses the document using the UpstageDocumentParseParser.
+        Loads and parses the document using the `UpstageDocumentParseParser`.
 
         Returns:
-            A list of Document objects representing the parsed layout analysis.
+            `Document` objects representing the parsed layout analysis.
         """
 
         if isinstance(self.file_path, list):
@@ -191,20 +191,20 @@ class UpstageDocumentParseLoader(BaseLoader):
         document, or splits the documents using a custom splitter.
 
         Args:
-            documents (list): A list of Document objects to be merged and split.
+            documents (list): A list of `Document` objects to be merged and split.
             splitter (object, optional): An optional splitter object that implements the
                 `split_documents` method. If provided, the documents will be split using
                 this splitter. Defaults to None, in which case the documents are merged.
 
         Returns:
-            list: A list of Document objects. If no splitter is provided, a single
-            Document object is returned with the merged content and combined metadata.
-            If a splitter is provided, the documents are split and a list of Document
+            list: A list of `Document` objects. If no splitter is provided, a single
+            `Document` object is returned with the merged content and combined metadata.
+            If a splitter is provided, the documents are split and a list of `Document`
             objects is returned.
 
         Raises:
-            AssertionError: If a splitter is provided but it does not implement the
-            `split_documents` method.
+            If a splitter is provided but it does not implement the `split_documents`
+                method.
         """
         if splitter is None:
             merged_content = " ".join([doc.page_content for doc in documents])
