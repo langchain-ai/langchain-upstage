@@ -11,7 +11,7 @@ license = "MIT"
 "Source Code" = "https://github.com/langchain-ai/langchain-upstage/tree/main/libs/upstage"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4.0"
+python = ">=3.10,<4.0"
 pypdf = "^4.2.0"
 requests = "^2.31.0"
 tokenizers = "^0.20.0"
