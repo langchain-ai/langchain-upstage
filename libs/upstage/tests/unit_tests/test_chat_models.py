@@ -112,9 +112,12 @@ def test_upstage_invoke(mock_completion: dict) -> None:
     def mock_create(*args: Any, **kwargs: Any) -> Any:
         nonlocal completed
         completed = True
-        return mock_completion
+        # Create a mock response object that mimics OpenAI SDK response
+        mock_response = MagicMock()
+        mock_response.model_dump.return_value = mock_completion
+        return mock_response
 
-    mock_client.create = mock_create
+    mock_client.create.side_effect = mock_create
     with patch.object(
         llm,
         "client",
@@ -133,16 +136,22 @@ def test_upstage_invoke_with_doc_parsing_model(mock_completion: dict) -> None:
     def mock_create(*args: Any, **kwargs: Any) -> Any:
         nonlocal completed
         completed = True
-        return mock_completion
+        # Create a mock response object that mimics OpenAI SDK response
+        mock_response = MagicMock()
+        mock_response.model_dump.return_value = mock_completion
+        return mock_response
 
-    mock_client.create = mock_create
-    with patch.object(
-        llm,
-        "client",
-        mock_client,
-    ), patch(
-        "langchain_upstage.chat_models.UpstageDocumentParseLoader.load",
-        return_value=[MagicMock(page_content="test")],
+    mock_client.create.side_effect = mock_create
+    with (
+        patch.object(
+            llm,
+            "client",
+            mock_client,
+        ),
+        patch(
+            "langchain_upstage.chat_models.UpstageDocumentParseLoader.load",
+            return_value=[MagicMock(page_content="test")],
+        ),
     ):
         res = llm.invoke("bab", file_path=EXAMPLE_PDF_PATH)
         assert res.content == "Bab"
@@ -157,9 +166,12 @@ async def test_upstage_ainvoke(mock_completion: dict) -> None:
     async def mock_create(*args: Any, **kwargs: Any) -> Any:
         nonlocal completed
         completed = True
-        return mock_completion
+        # Create a mock response object that mimics OpenAI SDK response
+        mock_response = MagicMock()
+        mock_response.model_dump.return_value = mock_completion
+        return mock_response
 
-    mock_client.create = mock_create
+    mock_client.create.side_effect = mock_create
     with patch.object(
         llm,
         "async_client",
@@ -178,16 +190,22 @@ async def test_upstage_ainvoke_with_doc_parsing_model(mock_completion: dict) -> 
     async def mock_create(*args: Any, **kwargs: Any) -> Any:
         nonlocal completed
         completed = True
-        return mock_completion
+        # Create a mock response object that mimics OpenAI SDK response
+        mock_response = MagicMock()
+        mock_response.model_dump.return_value = mock_completion
+        return mock_response
 
-    mock_client.create = mock_create
-    with patch.object(
-        llm,
-        "async_client",
-        mock_client,
-    ), patch(
-        "langchain_upstage.chat_models.UpstageDocumentParseLoader.load",
-        return_value=[MagicMock(page_content="test")],
+    mock_client.create.side_effect = mock_create
+    with (
+        patch.object(
+            llm,
+            "async_client",
+            mock_client,
+        ),
+        patch(
+            "langchain_upstage.chat_models.UpstageDocumentParseLoader.load",
+            return_value=[MagicMock(page_content="test")],
+        ),
     ):
         res = await llm.ainvoke("bab", file_path=EXAMPLE_PDF_PATH)
         assert res.content == "Bab"
@@ -198,7 +216,10 @@ def test_upstage_invoke_name(mock_completion: dict) -> None:
     llm = ChatUpstage()
 
     mock_client = MagicMock()
-    mock_client.create.return_value = mock_completion
+    # Create a mock response object that mimics OpenAI SDK response
+    mock_response = MagicMock()
+    mock_response.model_dump.return_value = mock_completion
+    mock_client.create.return_value = mock_response
 
     with patch.object(
         llm,
