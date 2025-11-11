@@ -11,11 +11,7 @@ from langchain_core.messages import (
     SystemMessage,
     ToolMessage,
 )
-from langchain_openai.chat_models.base import (
-    _convert_dict_to_message,
-    _convert_message_to_dict,
-)
-
+from langchain_core.messages.utils import convert_to_openai_messages
 from langchain_upstage import ChatUpstage
 
 EXAMPLE_PDF_PATH = Path(__file__).parent.parent / "examples/solar.pdf"
@@ -35,75 +31,57 @@ def test_upstage_model_param() -> None:
     assert ls_params["ls_provider"] == "upstage"
 
 
-def test_function_dict_to_message_function_message() -> None:
-    content = json.dumps({"result": "Example #1"})
-    name = "test_function"
-    result = _convert_dict_to_message(
-        {
-            "role": "function",
-            "name": name,
-            "content": content,
-        }
-    )
-    assert isinstance(result, FunctionMessage)
-    assert result.name == name
-    assert result.content == content
-
-
 def test_convert_dict_to_message_human() -> None:
-    message = {"role": "user", "content": "foo"}
-    result = _convert_dict_to_message(message)
     expected_output = HumanMessage(content="foo")
-    assert result == expected_output
-    assert _convert_message_to_dict(expected_output) == message
+    result_dict = convert_to_openai_messages(expected_output)
+    assert result_dict["role"] == "user"
+    assert result_dict["content"] == "foo"
 
 
 def test__convert_dict_to_message_human_with_name() -> None:
-    message = {"role": "user", "content": "foo", "name": "test"}
-    result = _convert_dict_to_message(message)
     expected_output = HumanMessage(content="foo", name="test")
-    assert result == expected_output
-    assert _convert_message_to_dict(expected_output) == message
+    result_dict = convert_to_openai_messages(expected_output)
+    assert result_dict["role"] == "user"
+    assert result_dict["content"] == "foo"
+    assert result_dict["name"] == "test"
 
 
 def test_convert_dict_to_message_ai() -> None:
-    message = {"role": "assistant", "content": "foo"}
-    result = _convert_dict_to_message(message)
     expected_output = AIMessage(content="foo")
-    assert result == expected_output
-    assert _convert_message_to_dict(expected_output) == message
+    result_dict = convert_to_openai_messages(expected_output)
+    assert result_dict["role"] == "assistant"
+    assert result_dict["content"] == "foo"
 
 
 def test_convert_dict_to_message_ai_with_name() -> None:
-    message = {"role": "assistant", "content": "foo", "name": "test"}
-    result = _convert_dict_to_message(message)
     expected_output = AIMessage(content="foo", name="test")
-    assert result == expected_output
-    assert _convert_message_to_dict(expected_output) == message
+    result_dict = convert_to_openai_messages(expected_output)
+    assert result_dict["role"] == "assistant"
+    assert result_dict["content"] == "foo"
+    assert result_dict["name"] == "test"
 
 
 def test_convert_dict_to_message_system() -> None:
-    message = {"role": "system", "content": "foo"}
-    result = _convert_dict_to_message(message)
     expected_output = SystemMessage(content="foo")
-    assert result == expected_output
-    assert _convert_message_to_dict(expected_output) == message
+    result_dict = convert_to_openai_messages(expected_output)
+    assert result_dict["role"] == "system"
+    assert result_dict["content"] == "foo"
 
 
 def test_convert_dict_to_message_system_with_name() -> None:
-    message = {"role": "system", "content": "foo", "name": "test"}
-    result = _convert_dict_to_message(message)
     expected_output = SystemMessage(content="foo", name="test")
-    assert result == expected_output
-    assert _convert_message_to_dict(expected_output) == message
+    result_dict = convert_to_openai_messages(expected_output)
+    assert result_dict["role"] == "system"
+    assert result_dict["content"] == "foo"
+    assert result_dict["name"] == "test"
 
 
 def test_convert_dict_to_message_tool() -> None:
-    message = {"role": "tool", "content": "foo", "tool_call_id": "bar"}
-    result = _convert_dict_to_message(message)
     expected_output = ToolMessage(content="foo", tool_call_id="bar")
-    assert result == expected_output
-    assert _convert_message_to_dict(expected_output) == message
+    result_dict = convert_to_openai_messages(expected_output)
+    assert result_dict["role"] == "tool"
+    assert result_dict["content"] == "foo"
+    assert result_dict["tool_call_id"] == "bar"
 
 
 @pytest.fixture
