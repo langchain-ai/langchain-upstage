@@ -179,7 +179,7 @@ class ChatUpstage(BaseChatOpenAI):
         return encode.ids
 
     def get_num_tokens_from_messages(
-        self, messages: List[BaseMessage], tools: Sequence[Any] | None = None
+        self, messages: Sequence[BaseMessage], tools: Sequence[Any] | None = None
     ) -> int:
         """Calculate num tokens for solar model."""
         tokenizer = self._get_tokenizer()
