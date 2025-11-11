@@ -211,7 +211,6 @@ class ChatUpstage(BaseChatOpenAI):
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> ChatResult:
-
         if self._using_doc_parsing_model(kwargs):
             document_contents = self._parse_documents(kwargs.pop("file_path"))
             messages.append(HumanMessage(document_contents))
@@ -225,16 +224,12 @@ class ChatUpstage(BaseChatOpenAI):
         run_manager: Optional[AsyncCallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> ChatResult:
-
         if self._using_doc_parsing_model(kwargs):
             document_contents = self._parse_documents(kwargs.pop("file_path"))
             messages.append(HumanMessage(document_contents))
 
         return await super()._agenerate(
-            messages,
-            stop=stop,
-            run_manager=run_manager,
-            **kwargs
+            messages, stop=stop, run_manager=run_manager, **kwargs
         )
 
     def _using_doc_parsing_model(self, kwargs: Dict[str, Any]) -> bool:
