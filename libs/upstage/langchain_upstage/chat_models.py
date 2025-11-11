@@ -20,7 +20,7 @@ from langchain_core.callbacks import (
 )
 from langchain_core.language_models import LanguageModelInput
 from langchain_core.language_models.chat_models import LangSmithParams
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.messages.utils import convert_to_openai_messages
 from langchain_core.outputs import ChatResult
 from langchain_core.runnables import Runnable
@@ -230,7 +230,12 @@ class ChatUpstage(BaseChatOpenAI):
             document_contents = self._parse_documents(kwargs.pop("file_path"))
             messages.append(HumanMessage(document_contents))
 
-        return await super()._agenerate(messages, stop=stop, run_manager=run_manager, **kwargs)
+        return await super()._agenerate(
+            messages,
+            stop=stop,
+            run_manager=run_manager,
+            **kwargs
+        )
 
     def _using_doc_parsing_model(self, kwargs: Dict[str, Any]) -> bool:
         if "file_path" in kwargs:
