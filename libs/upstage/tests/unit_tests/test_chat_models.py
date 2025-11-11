@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -6,12 +5,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import (
     AIMessage,
-    FunctionMessage,
     HumanMessage,
     SystemMessage,
     ToolMessage,
 )
 from langchain_core.messages.utils import convert_to_openai_messages
+
 from langchain_upstage import ChatUpstage
 
 EXAMPLE_PDF_PATH = Path(__file__).parent.parent / "examples/solar.pdf"
