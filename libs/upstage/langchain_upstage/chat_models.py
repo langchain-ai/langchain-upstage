@@ -156,16 +156,20 @@ class ChatUpstage(BaseChatOpenAI):
         if self.max_retries is not None:
             client_params["max_retries"] = self.max_retries
 
-        if not (self.client or None):
+        if not self.root_client:
             sync_specific: dict = {"http_client": self.http_client}
-            self.client = openai.OpenAI(
-                **client_params, **sync_specific
-            ).chat.completions
-        if not (self.async_client or None):
+            self.root_client = openai.OpenAI(**client_params, **sync_specific)
+
+        if not self.client:
+            self.client = self.root_client.chat.completions
+
+        if not self.root_async_client:
             async_specific: dict = {"http_client": self.http_async_client}
-            self.async_client = openai.AsyncOpenAI(
-                **client_params, **async_specific
-            ).chat.completions
+            self.root_async_client = openai.AsyncOpenAI(**client_params, **async_specific)
+
+        if not self.async_client:
+            self.async_client = self.root_async_client.chat.completions
+
         return self
 
     def _get_tokenizer(self) -> Tokenizer:
