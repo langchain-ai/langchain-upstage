@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Optional, Literal
+from typing import Literal, Optional
 
 from langchain_upstage.tools.information_extraction_check import (
     MEGABYTE,
@@ -104,7 +104,9 @@ class UpstageUniversalInformationExtraction:
             },
         )
 
-    def generate_schema(self, image_urls: list[str], system_content: str | None = None) -> dict:
+    def generate_schema(
+        self, image_urls: list[str], system_content: str | None = None
+    ) -> dict:
         if len(image_urls) > MAX_IMAGE_COUNT:
             raise ValueError(f"max image count: {MAX_IMAGE_COUNT}")
 

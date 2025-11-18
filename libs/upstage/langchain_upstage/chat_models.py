@@ -165,7 +165,9 @@ class ChatUpstage(BaseChatOpenAI):
 
         if not self.root_async_client:
             async_specific: dict = {"http_client": self.http_async_client}
-            self.root_async_client = openai.AsyncOpenAI(**client_params, **async_specific)
+            self.root_async_client = openai.AsyncOpenAI(
+                **client_params, **async_specific
+            )
 
         if not self.async_client:
             self.async_client = self.root_async_client.chat.completions
