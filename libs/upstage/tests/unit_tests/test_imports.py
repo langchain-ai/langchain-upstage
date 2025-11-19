@@ -5,8 +5,6 @@ EXPECTED_ALL = [
     "UpstageEmbeddings",
     "UpstageDocumentParseLoader",
     "UpstageDocumentParseParser",
-    "UpstageGroundednessCheck",
-    "GroundednessCheck",
     "UpstageUniversalInformationExtraction",
     "UpstagePrebuiltInformationExtraction",
 ]
