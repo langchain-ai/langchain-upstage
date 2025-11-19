@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Optional
+from typing import Literal, Optional
 
 from langchain_upstage.tools.information_extraction_check import (
     MEGABYTE,
@@ -25,6 +25,14 @@ SUPPORTED_EXTENSIONS = [
 ]
 
 MAX_FILE_SIZE = 50 * MEGABYTE
+MAX_IMAGE_COUNT = 3
+
+
+def _create_system_content(system_content: str) -> dict:
+    return {
+        "role": "system",
+        "content": system_content,
+    }
 
 
 class UpstageUniversalInformationExtraction:
@@ -64,6 +72,7 @@ class UpstageUniversalInformationExtraction:
         confidence: bool = True,
         doc_split: bool = False,
         location: bool = False,
+        mode: Literal["standard", "enhanced"] = "standard",
     ) -> dict:
         contents = [
             create_message(image_url, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
@@ -85,6 +94,7 @@ class UpstageUniversalInformationExtraction:
                 "model": self.model_name,
                 "messages": messages,
                 "response_format": response_format,
+                "mode": mode,
                 "chunking": {
                     "pages_per_chunk": pages_per_chunk,
                 },
@@ -94,11 +104,23 @@ class UpstageUniversalInformationExtraction:
             },
         )
 
-    def generate_schema(self, image_urls: list[str]) -> dict:
-        contents = [
-            create_message(image_url, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
-            for image_url in image_urls
-        ]
+    def generate_schema(
+        self, image_urls: list[str], system_content: str | None = None
+    ) -> dict:
+        if len(image_urls) > MAX_IMAGE_COUNT:
+            raise ValueError(f"max image count: {MAX_IMAGE_COUNT}")
+
+        contents = []
+
+        if system_content:
+            contents.append(_create_system_content(system_content))
+
+        contents.extend(
+            [
+                create_message(image_url, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE)
+                for image_url in image_urls
+            ]
+        )
 
         messages = [{"role": "user", "content": contents}]
 
