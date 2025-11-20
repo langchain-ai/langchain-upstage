@@ -120,9 +120,7 @@ class ChatUpstage(BaseChatOpenAI):
     """add trace header."""
 
     disabled_params: dict[str, Any] = Field(
-        default_factory=lambda: {
-            "parallel_tool_calls": None
-        }
+        default_factory=lambda: {"parallel_tool_calls": None}
     )
 
     @model_validator(mode="after")

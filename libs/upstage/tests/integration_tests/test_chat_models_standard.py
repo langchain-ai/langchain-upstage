@@ -23,15 +23,15 @@ class TestUpstageStandard(ChatModelIntegrationTests):
     @property
     def has_tool_choice(self) -> bool:
         """Upstage API tool_choice support status.
-        
+
         Note: The Upstage API does support tool_choice parameters and actually
         calls tools correctly. However, there is a known bug where the API
         returns an incorrect finish_reason value ('stop' instead of 'tool_calls')
         when tool_choice is set to 'required' or a specific tool name.
-        
+
         The API team is aware of this issue and is currently working on a fix.
         Once fixed, this property should be changed to return True.
-        
+
         Therefore, we skip the test_tool_choice test until the API bug is resolved.
         """
         return False
