@@ -3,10 +3,8 @@ from __future__ import annotations
 import os
 from typing import (
     Any,
-    Callable,
     Dict,
     List,
-    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -18,15 +16,11 @@ from langchain_core.callbacks import (
     AsyncCallbackManagerForLLMRun,
     CallbackManagerForLLMRun,
 )
-from langchain_core.language_models import LanguageModelInput
 from langchain_core.language_models.chat_models import LangSmithParams
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_core.messages.utils import convert_to_openai_messages
 from langchain_core.outputs import ChatResult
-from langchain_core.runnables import Runnable
-from langchain_core.tools import BaseTool
 from langchain_core.utils import from_env, secret_from_env
-from langchain_core.utils.function_calling import convert_to_openai_tool
 from langchain_openai.chat_models.base import BaseChatOpenAI
 from pydantic import Field, SecretStr, model_validator
 from tokenizers import Tokenizer
@@ -124,6 +118,10 @@ class ChatUpstage(BaseChatOpenAI):
     """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-tokenizer"""
     default_headers: Union[Mapping[str, str], None] = DEFAULT_HEADERS
     """add trace header."""
+
+    disabled_params: dict[str, Any] = Field(
+        default_factory=lambda: {"parallel_tool_calls": None}
+    )
 
     @model_validator(mode="after")
     def validate_environment(self) -> Self:
@@ -269,69 +267,3 @@ class ChatUpstage(BaseChatOpenAI):
             file_title = file_titles[min(i, len(file_titles) - 1)]
             document_contents += f"{file_title}:\n{doc.page_content}\n\n"
         return document_contents
-
-    def bind_tools(
-        self,
-        tools: Sequence[dict[str, Any] | type | Callable | BaseTool],
-        *,
-        tool_choice: Optional[Union[dict, str, Literal["auto"], bool]] = None,
-        **kwargs: Any,
-    ) -> Runnable[LanguageModelInput, AIMessage]:
-        """Bind tool-like objects to this chat model.
-
-        Assumes model is compatible with Upstage tool-calling API.
-
-        Args:
-            tools: A list of tool definitions to bind to this chat model.
-                Can be  a dictionary, pydantic model, callable, or BaseTool. Pydantic
-                models, callables, and BaseTools will be automatically converted to
-                their schema dictionary representation.
-            tool_choice: Which tool to require the model to call.
-                Options are:
-                name of the tool (str): calls corresponding tool;
-                "auto": automatically selects a tool (including no tool);
-                "none": does not call a tool;
-                True: forces tool call (requires `tools` be length 1);
-                False: no effect;
-                or a dict of the form:
-                {"type": "function", "function": {"name": <<tool_name>>}}.
-            **kwargs: Any additional parameters to pass to the
-                :class:`~langchain.runnable.Runnable` constructor.
-        """
-
-        formatted_tools = [convert_to_openai_tool(tool) for tool in tools]
-        if tool_choice:
-            if isinstance(tool_choice, str):
-                # tool_choice is a tool/function name
-                if tool_choice in ("any", "required", "auto"):
-                    tool_choice = "auto"
-                elif tool_choice == "none":
-                    tool_choice = "none"
-                else:
-                    tool_choice = {
-                        "type": "function",
-                        "function": {"name": tool_choice},
-                    }
-
-            elif isinstance(tool_choice, bool):
-                tool_choice = "auto"
-            elif isinstance(tool_choice, dict):
-                tool_names = [
-                    formatted_tool["function"]["name"]
-                    for formatted_tool in formatted_tools
-                ]
-                if not any(
-                    tool_name == tool_choice["function"]["name"]
-                    for tool_name in tool_names
-                ):
-                    raise ValueError(
-                        f"Tool choice {tool_choice} was specified, but the only "
-                        f"provided tools were {tool_names}."
-                    )
-            else:
-                raise ValueError(
-                    f"Unrecognized tool_choice type. Expected str, bool or dict. "
-                    f"Received: {tool_choice}"
-                )
-            kwargs["tool_choice"] = tool_choice
-        return super().bind(tools=formatted_tools, **kwargs)
