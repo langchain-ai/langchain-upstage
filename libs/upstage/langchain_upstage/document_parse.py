@@ -21,12 +21,10 @@ logger.setLevel(logging.ERROR)
 
 
 def validate_file_path(file_path: Union[str, Path, List[str], List[Path]]) -> None:
-    """
-    Validates if a file exists at the given file path.
+    """Validates if a file exists at the given file path.
 
     Args:
-        file_path (Union[str, Path, List[str], List[Path]): The file path(s) to be
-                                                            validated.
+        file_path: The file path(s) to be validated.
 
     Raises:
         FileNotFoundError: If the file or any of the files in the list do not exist.
@@ -67,14 +65,14 @@ class UpstageDocumentParseLoader(BaseLoader):
     set with your API key or pass it as a named parameter to the constructor.
 
     Example:
-        .. code-block:: python
+        ```python
+        from langchain_upstage import UpstageDocumentParseLoader
 
-            from langchain_upstage import UpstageDocumentParseLoader
-
-            file_path = "/PATH/TO/YOUR/FILE.pdf"
-            loader = UpstageDocumentParseLoader(
-                        file_path, split="page", output_format="text"
-                     )
+        file_path = "/PATH/TO/YOUR/FILE.pdf"
+        loader = UpstageDocumentParseLoader(
+            file_path, split="page", output_format="text"
+        )
+        ```
     """
 
     def __init__(
@@ -94,28 +92,26 @@ class UpstageDocumentParseLoader(BaseLoader):
         Initializes an instance of the Upstage document parse loader.
 
         Args:
-            file_path (Union[str, Path, List[str], List[Path]]): The path to the
-                                                                document to be loaded.
+            file_path: The path to the document to be loaded.
             split (SplitType, optional): The type of splitting to be applied.
-                                         Defaults to "none" (no splitting).
             api_key (str, optional): The API key for accessing the Upstage API.
-                                     Defaults to None, in which case it will be
-                                     fetched from the environment variable
-                                     `UPSTAGE_API_KEY`.
+                Defaults to None, in which case it will be fetched from the environment
+                variable `UPSTAGE_API_KEY`.
             base_url (str, optional): The base URL for accessing the Upstage API.
             model (str): The model to be used for the document parse.
-                         Defaults to "document-parse".
+                Defaults to `'document-parse'`.
             ocr (OCRMode, optional): Extract text from images in the document using
-                                      OCR. If the value is "force", OCR is used to
-                                      extract text from an image. If the value is
-                                      "auto", text is extracted from a PDF. (An error
-                                      will occur if the value is "auto" and the input
-                                      is NOT in PDF format)
+                OCR.
+
+                If the value is `'force'`, OCR is used to extract text from an image.
+
+                If the value is `'auto'`, text is extracted from a PDF. (An error will
+                occur if the value is `'auto'` and the input is NOT in PDF format)
             output_format (OutputFormat, optional): Format of the inference results.
             coordinates (bool, optional): Whether to include the coordinates of the
-                                          OCR in the output.
+                OCR in the output.
             base64_encoding (List[Category], optional): The category of the elements to
-                                                        be encoded in base64.
+                be encoded in base64.
         """
         self.file_path = file_path
         self.split = split
@@ -146,8 +142,7 @@ class UpstageDocumentParseLoader(BaseLoader):
         validate_file_path(self.file_path)
 
     def load(self) -> List[Document]:
-        """
-        Loads and parses the document using the `UpstageDocumentParseParser`.
+        """Loads and parses the document using the `UpstageDocumentParseParser`.
 
         Returns:
             `Document` objects representing the parsed layout analysis.
@@ -167,11 +162,10 @@ class UpstageDocumentParseLoader(BaseLoader):
             return list(self.parser.lazy_parse(blob, is_batch=True))
 
     def lazy_load(self) -> Iterator[Document]:
-        """
-        Lazily loads and parses the document using the UpstageDocumentParseParser.
+        """Lazily loads and parses the document using the `UpstageDocumentParseParser`.
 
         Returns:
-            An iterator of Document objects representing the parsed layout analysis.
+            An iterator of `Document` objects representing the parsed layout analysis.
         """
 
         if isinstance(self.file_path, list):
@@ -219,8 +213,8 @@ class UpstageDocumentParseLoader(BaseLoader):
 
             return [Document(page_content=merged_content, metadata=metadatas)]
         else:
-            assert hasattr(
-                splitter, "split_documents"
-            ), "splitter must implement split_documents method"
+            assert hasattr(splitter, "split_documents"), (
+                "splitter must implement split_documents method"
+            )
 
             return splitter.split_documents(documents)

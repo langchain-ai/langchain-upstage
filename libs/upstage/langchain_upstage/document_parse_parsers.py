@@ -42,9 +42,8 @@ def parse_output(data: dict, output_format: OutputFormat) -> str:
     Parse the output data based on the specified output type.
 
     Args:
-        data (dict): The data to be parsed.
-        output_format (OutputFormat): The output format to parse the element data
-                                               into.
+        data: The data to be parsed.
+        output_format: The output format to parse the element data into.
 
     Returns:
         str: The parsed output.
@@ -91,11 +90,11 @@ class UpstageDocumentParseParser(BaseBlobParser):
     set with your API key or pass it as a named parameter to the constructor.
 
     Example:
-        .. code-block:: python
+        ```python
+        from langchain_upstage import UpstageDocumentParseParser
 
-            from langchain_upstage import UpstageDocumentParseParser
-
-            loader = UpstageDocumentParseParser(split="page", output_format="text")
+        loader = UpstageDocumentParseParser(split="page", output_format="text")
+        ```
     """
 
     def __init__(
@@ -115,26 +114,22 @@ class UpstageDocumentParseParser(BaseBlobParser):
 
         Args:
             api_key (str, optional): The API key for accessing the Upstage API.
-                                     Defaults to None, in which case it will be
-                                     fetched from the environment variable
-                                     `UPSTAGE_API_KEY`.
+                Defaults to None, in which case it will be fetched from the environment
+                variable `UPSTAGE_API_KEY`.
             base_url (str, optional): The base URL for accessing the Upstage API.
             model (str): The model to be used for the document parse.
-                         Defaults to "document-parse".
+                Defaults to "document-parse".
             split (SplitType, optional): The type of splitting to be applied.
-                                         Defaults to "none" (no splitting).
+                Defaults to "none" (no splitting).
             ocr (OCRMode, optional): Extract text from images in the document using OCR.
-                                     If the value is "force", OCR is used to extract
-                                     text from an image. If the value is "auto", text is
-                                     extracted from a PDF. (An error will occur if the
-                                     value is "auto" and the input is NOT in PDF format)
+                If the value is "force", OCR is used to extract text from an image. If
+                the value is "auto", text is extracted from a PDF. (An error will occur
+                if the value is "auto" and the input is NOT in PDF format)
             output_format (OutputFormat, optional): Format of the inference results.
             coordinates (bool, optional): Whether to include the coordinates of the
-                                          OCR in the output.
+                OCR in the output.
             base64_encoding (List[Category], optional): The category of the elements to
-                                                        be encoded in base64.
-
-
+                be encoded in base64.
         """
         self.api_key = get_from_param_or_env(
             "UPSTAGE_API_KEY",
@@ -152,11 +147,11 @@ class UpstageDocumentParseParser(BaseBlobParser):
         self.base64_encoding = base64_encoding if base64_encoding is not None else []
 
     def _get_headers(self) -> Dict[str, str]:
-        """
-        Get headers for API requests with x-upstage-client always set to "langchain".
+        """Get headers for API requests with `x-upstage-client` always set to
+        `'langchain'`.
 
         Returns:
-            Dict containing Authorization and x-upstage-client headers.
+            Dict containing Authorization and `x-upstage-client` headers.
         """
         return {
             "Authorization": f"Bearer {self.api_key}",
@@ -164,12 +159,11 @@ class UpstageDocumentParseParser(BaseBlobParser):
         }
 
     def _get_response(self, files: Dict) -> List:
-        """
-        Sends a POST request to the API endpoint with the provided files and
-        returns the response.
+        """Sends a POST request to the API endpoint with the provided files and returns
+        the response.
 
         Args:
-            files: the files to be sent in the request.
+            files: The files to be sent in the request.
 
         Returns:
             dict: The JSON response from the API.
@@ -201,16 +195,13 @@ class UpstageDocumentParseParser(BaseBlobParser):
         start_page: int,
         num_pages: int = DEFAULT_NUM_PAGES,
     ) -> List:
-        """
-        Splits the full pdf document into partial pages and sends a request to the
+        """Splits the full pdf document into partial pages and sends a request to the
         server.
 
         Args:
             full_docs (PdfReader): The full document to be split and requested.
             start_page (int): The starting page number for splitting the document.
-            num_pages (int, optional): The number of pages to split the document
-                                       into.
-                                       Defaults to DEFAULT_NUMBER_OF_PAGE.
+            num_pages (int, optional): The number of pages to split the document into.
 
         Returns:
             response: The response from the server.
@@ -229,16 +220,16 @@ class UpstageDocumentParseParser(BaseBlobParser):
         return response
 
     def _element_document(self, elements: Dict, start_page: int = 0) -> Document:
-        """
-        Converts an elements into a Document object.
+        """Converts an elements into a `Document` object.
 
         Args:
             elements (Dict) : The elements to convert.
             start_page (int): The starting page number for splitting the document.
-                              This number starts from zero.
+
+                This number starts from zero.
 
         Returns:
-            A list containing a single Document object.
+            A list containing a single `Document` object.
 
         """
         metadata = {
@@ -258,12 +249,12 @@ class UpstageDocumentParseParser(BaseBlobParser):
         )
 
     def _page_document(self, elements: List, start_page: int = 0) -> List[Document]:
-        """
-        Combines elements with the same page number into a single Document object.
+        """Combines elements with the same page number into a single Document object.
 
         Args:
             elements: A list of elements containing page numbers.
             start_page: The starting page number for splitting the document.
+
                 This number starts from zero.
 
         Returns:
@@ -312,21 +303,19 @@ class UpstageDocumentParseParser(BaseBlobParser):
         return _docs
 
     def lazy_parse(self, blob: Blob, is_batch: bool = False) -> Iterator[Document]:
-        """
-        Lazily parses a document and yields Document objects based on the specified
+        """Lazily parses a document and yields Document objects based on the specified
         split type.
 
         Args:
             blob (Blob): The input document blob to parse.
             is_batch (bool, optional): Whether to parse the document in batches.
-                                       Defaults to False (single page parsing)
+                Defaults to `False` (single page parsing)
 
         Yields:
             Document: The parsed document object.
 
         Raises:
             ValueError: If an invalid split type is provided.
-
         """
 
         if is_batch:

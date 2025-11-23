@@ -34,17 +34,17 @@ SUPPORTED_EXTENSIONS = [
 
 
 class UpstagePrebuiltInformationExtraction:
-    """UpstagePrebuiltInformationExtraction Information extraction model.
+    """`UpstagePrebuiltInformationExtraction` Information extraction model.
 
     To use, set the environment variable `UPSTAGE_API_KEY` with your API key or
     pass it as a named parameter to the constructor.
 
     Example:
-        .. code-block:: python
+        ```python
+        from langchain_upstage import UpstagePrebuiltInformationExtraction
 
-            from langchain_upstage import UpstagePrebuiltInformationExtraction
-
-            model = UpstagePrebuiltInformationExtraction(model='receipt-extraction')
+        model = UpstagePrebuiltInformationExtraction(model='receipt-extraction')
+        ```
     """
 
     def __init__(

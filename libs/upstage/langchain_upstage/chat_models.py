@@ -43,15 +43,15 @@ DEFAULT_HEADERS = {UPSTAGE_CLIENT_HEADER: UPSTAGE_CLIENT_VALUE}
 class ChatUpstage(BaseChatOpenAI):
     """ChatUpstage chat model.
 
-    To use, you should have the environment variable `UPSTAGE_API_KEY`
-    set with your API key or pass it as a named parameter to the constructor.
+    To use, you should have the environment variable `UPSTAGE_API_KEY` set with your
+    API key or pass it as a named parameter to the constructor.
 
     Example:
-        .. code-block:: python
+        ```python
+        from langchain_upstage import ChatUpstage
 
-            from langchain_upstage import ChatUpstage
-
-            model = ChatUpstage()
+        model = ChatUpstage()
+        ```
     """
 
     @property
@@ -86,6 +86,7 @@ class ChatUpstage(BaseChatOpenAI):
 
     model_name: str = Field(default="solar-mini", alias="model")
     """Model name to use."""
+
     upstage_api_key: SecretStr = Field(
         default_factory=secret_from_env(
             "UPSTAGE_API_KEY",
@@ -98,26 +99,38 @@ class ChatUpstage(BaseChatOpenAI):
         alias="api_key",
     )
     """Automatically inferred from env are `UPSTAGE_API_KEY` if not provided."""
+
     upstage_api_base: Optional[str] = Field(
         default_factory=from_env(
             "UPSTAGE_API_BASE", default="https://api.upstage.ai/v1/solar"
         ),
         alias="base_url",
     )
-    """Base URL path for API requests, leave blank if not using a proxy or service 
-    emulator."""
+    """Base URL path for API requests.
+    
+    Leave blank if not using a proxy or service emulator.
+    """
+
     openai_api_key: Optional[SecretStr] = Field(default=None)
-    """openai api key is not supported for upstage. use `upstage_api_key` instead."""
+    """OpenAI api key is not supported for upstage. use `upstage_api_key` instead."""
+
     openai_api_base: Optional[str] = Field(default=None)
-    """openai api base is not supported for upstage. use `upstage_api_base` instead."""
+    """OpenAI api base is not supported for upstage. use `upstage_api_base` instead."""
+
     openai_organization: Optional[str] = Field(default=None)
-    """openai organization is not supported for upstage."""
+    """OpenAI organization is not supported for upstage."""
+
     tiktoken_model_name: Optional[str] = None
-    """tiktoken is not supported for upstage."""
+    """Tiktoken is not supported for upstage."""
+
     tokenizer_name: Optional[str] = "upstage/solar-pro2-tokenizer"
-    """huggingface tokenizer name. Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-tokenizer"""
+    """Huggingface tokenizer name.
+    
+    Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-tokenizer
+    """
+
     default_headers: Union[Mapping[str, str], None] = DEFAULT_HEADERS
-    """add trace header."""
+    """Add trace headers."""
 
     disabled_params: dict[str, Any] = Field(
         default_factory=lambda: {"parallel_tool_calls": None}
