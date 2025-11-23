@@ -36,17 +36,17 @@ def _create_system_content(system_content: str) -> dict:
 
 
 class UpstageUniversalInformationExtraction:
-    """UpstageUniversalInformationExtraction Information extraction model.
+    """`UpstageUniversalInformationExtraction` Information extraction model.
 
     To use, set the environment variable `UPSTAGE_API_KEY` with your API key or
     pass it as a named parameter to the constructor.
 
     Example:
-        .. code-block:: python
+        ```python
+        from langchain_upstage import UpstageUniversalInformationExtraction
 
-            from langchain_upstage import UpstageUniversalInformationExtraction
-
-            model = UpstageUniversalInformationExtraction(model='information-extract')
+        model = UpstageUniversalInformationExtraction(model='information-extract')
+        ```
     """
 
     def __init__(
