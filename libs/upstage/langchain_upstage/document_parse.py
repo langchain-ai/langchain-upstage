@@ -197,8 +197,8 @@ class UpstageDocumentParseLoader(BaseLoader):
             objects is returned.
 
         Raises:
-            If a splitter is provided but it does not implement the `split_documents`
-                method.
+            AssertionError: If a splitter is provided but it does not implement
+                the `split_documents` method.
         """
         if splitter is None:
             merged_content = " ".join([doc.page_content for doc in documents])
