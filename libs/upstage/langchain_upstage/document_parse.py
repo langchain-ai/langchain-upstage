@@ -38,8 +38,6 @@ def validate_file_path(file_path: Union[str, Path, List[str], List[Path]]) -> No
         raise FileNotFoundError(f"File not found: {file_path}")
 
 
-
-
 class UpstageDocumentParseLoader(BaseLoader):
     """Upstage Document Parse Loader.
 

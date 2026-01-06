@@ -87,8 +87,8 @@ def _file_to_base64(file_path: str) -> dict:
         file_path: Path to the file or URL to convert.
 
     Returns:
-        dict: Dictionary with 'type' and 'image_url' keys. For URLs, returns the URL directly.
-            For local files, returns base64 encoded data.
+        dict: Dictionary with 'type' and 'image_url' keys. For URLs, returns the
+            URL directly. For local files, returns base64 encoded data.
 
     Raises:
         FileNotFoundError: If the file does not exist (URLs are skipped).
@@ -103,21 +103,23 @@ def _file_to_base64(file_path: str) -> dict:
 
 
 class UpstageUniversalInformationExtraction(BaseTool):
-    """Tool for extracting structured information from any document using universal extraction.
+    """Tool for extracting structured information from any document using universal
+    extraction.
 
     This tool uses Upstage's universal information extraction model that can extract
     information from any document type based on a provided JSON schema.
 
-    Unlike prebuilt models, this tool requires you to define a JSON schema that specifies
-    what information to extract from the document. This makes it flexible for any
-    document type but requires more configuration.
+    Unlike prebuilt models, this tool requires you to define a JSON schema that
+    specifies what information to extract from the document. This makes it flexible
+    for any document type but requires more configuration.
 
     To use, you should have the environment variable `UPSTAGE_API_KEY`
     set with your API key or pass it as a named parameter to the constructor.
 
     Args:
         model: The model to use for extraction. Defaults to "information-extract".
-        api_key: Optional API key. If not provided, will use UPSTAGE_API_KEY environment variable.
+        api_key: Optional API key. If not provided, will use UPSTAGE_API_KEY
+            environment variable.
 
     Example:
         .. code-block:: python
@@ -208,11 +210,13 @@ class UpstageUniversalInformationExtraction(BaseTool):
         """Extract information from documents using the universal extraction model.
 
         Args:
-            image_urls: List of file paths or URLs to images/documents to extract from.
-            response_format: JSON schema defining the structure of information to extract.
-                Should be a dict with 'type' and 'json_schema' keys.
+            image_urls: List of file paths or URLs to images/documents to extract
+                from.
+            response_format: JSON schema defining the structure of information to
+                extract. Should be a dict with 'type' and 'json_schema' keys.
             pages_per_chunk: Number of pages to process per chunk. Default is 5.
-            confidence: Whether to include confidence scores in the response. Default is True.
+            confidence: Whether to include confidence scores in the response.
+                Default is True.
             doc_split: Whether to split documents. Default is False.
             location: Whether to include location information. Default is False.
             run_manager: Optional callback manager for tool execution.
@@ -228,17 +232,24 @@ class UpstageUniversalInformationExtraction(BaseTool):
             Exception: If API call fails or response parsing fails.
         """
         if self.api_wrapper is None:
-            error_msg = "API wrapper not initialized. Tool may not have been properly configured."
+            error_msg = (
+                "API wrapper not initialized. Tool may not have been properly "
+                "configured."
+            )
             if run_manager:
                 run_manager.on_tool_error(ValueError(error_msg))
             raise ValueError(error_msg)
 
         try:
             # Convert files to base64
-            contents = [_file_to_base64(url) for url in image_urls]
+            contents: list[dict[str, Any]] = [
+                _file_to_base64(url) for url in image_urls
+            ]
 
             # Prepare messages
-            messages = [HumanMessage(content=contents)]
+            # Type cast: contents is list[dict] which is compatible with
+            # list[str | dict[Any, Any]]
+            messages = [HumanMessage(content=cast(Any, contents))]
 
             # Use ChatUpstage to make the API call
             api_wrapper = cast(ChatUpstage, self.api_wrapper)
@@ -256,10 +267,16 @@ class UpstageUniversalInformationExtraction(BaseTool):
 
             # Parse response
             if hasattr(response, "content") and response.content:
+                # Type check: response.content should be str for json.loads
+                content_str = (
+                    response.content
+                    if isinstance(response.content, str)
+                    else str(response.content)
+                )
                 try:
-                    return json.loads(response.content)
+                    return json.loads(content_str)
                 except json.JSONDecodeError:
-                    return {"content": response.content}
+                    return {"content": content_str}
             return {}
         except (FileNotFoundError, ValueError) as e:
             # Re-raise validation errors as-is
@@ -283,14 +300,17 @@ class UpstageUniversalInformationExtraction(BaseTool):
         location: bool = DEFAULT_LOCATION,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> dict:
-        """Extract information from documents asynchronously using the universal extraction model.
+        """Extract information from documents asynchronously using the universal
+        extraction model.
 
         Args:
-            image_urls: List of file paths or URLs to images/documents to extract from.
-            response_format: JSON schema defining the structure of information to extract.
-                Should be a dict with 'type' and 'json_schema' keys.
+            image_urls: List of file paths or URLs to images/documents to extract
+                from.
+            response_format: JSON schema defining the structure of information to
+                extract. Should be a dict with 'type' and 'json_schema' keys.
             pages_per_chunk: Number of pages to process per chunk. Default is 5.
-            confidence: Whether to include confidence scores in the response. Default is True.
+            confidence: Whether to include confidence scores in the response.
+                Default is True.
             doc_split: Whether to split documents. Default is False.
             location: Whether to include location information. Default is False.
             run_manager: Optional async callback manager for tool execution.
@@ -306,17 +326,24 @@ class UpstageUniversalInformationExtraction(BaseTool):
             Exception: If API call fails or response parsing fails.
         """
         if self.api_wrapper is None:
-            error_msg = "API wrapper not initialized. Tool may not have been properly configured."
+            error_msg = (
+                "API wrapper not initialized. Tool may not have been properly "
+                "configured."
+            )
             if run_manager:
                 await run_manager.on_tool_error(ValueError(error_msg))
             raise ValueError(error_msg)
 
         try:
             # Convert files to base64
-            contents = [_file_to_base64(url) for url in image_urls]
+            contents: list[dict[str, Any]] = [
+                _file_to_base64(url) for url in image_urls
+            ]
 
             # Prepare messages
-            messages = [HumanMessage(content=contents)]
+            # Type cast: contents is list[dict] which is compatible with
+            # list[str | dict[Any, Any]]
+            messages = [HumanMessage(content=cast(Any, contents))]
 
             # Use ChatUpstage to make the API call
             api_wrapper = cast(ChatUpstage, self.api_wrapper)
@@ -333,10 +360,16 @@ class UpstageUniversalInformationExtraction(BaseTool):
 
             # Parse response
             if hasattr(response, "content") and response.content:
+                # Type check: response.content should be str for json.loads
+                content_str = (
+                    response.content
+                    if isinstance(response.content, str)
+                    else str(response.content)
+                )
                 try:
-                    return json.loads(response.content)
+                    return json.loads(content_str)
                 except json.JSONDecodeError:
-                    return {"content": response.content}
+                    return {"content": content_str}
             return {}
         except (FileNotFoundError, ValueError) as e:
             # Re-raise validation errors as-is
@@ -378,7 +411,8 @@ class UpstageUniversalInformationExtraction(BaseTool):
         """
         if self.api_wrapper is None:
             raise ValueError(
-                "API wrapper not initialized. Tool may not have been properly configured."
+                "API wrapper not initialized. Tool may not have been properly "
+                "configured."
             )
 
         if len(image_urls) > 3:
@@ -386,10 +420,14 @@ class UpstageUniversalInformationExtraction(BaseTool):
 
         try:
             # Convert files to base64
-            contents = [_file_to_base64(url) for url in image_urls]
+            contents: list[dict[str, Any]] = [
+                _file_to_base64(url) for url in image_urls
+            ]
 
             # Prepare messages
-            messages = [HumanMessage(content=contents)]
+            # Type cast: contents is list[dict] which is compatible with
+            # list[str | dict[Any, Any]]
+            messages = [HumanMessage(content=cast(Any, contents))]
 
             # Create ChatUpstage instance for schema generation endpoint
             # The endpoint is /schema-generation/chat/completions
@@ -397,10 +435,10 @@ class UpstageUniversalInformationExtraction(BaseTool):
             api_key = self.upstage_api_key
             if not api_key and self.api_wrapper:
                 api_key = getattr(self.api_wrapper, "upstage_api_key", None)
-            
+
             if not api_key:
                 raise ValueError("API key not available for schema generation")
-            
+
             schema_api_wrapper = ChatUpstage(
                 model=self.model,
                 api_key=api_key,
@@ -412,26 +450,29 @@ class UpstageUniversalInformationExtraction(BaseTool):
 
             # Parse response - content contains stringified JSON schema
             if hasattr(response, "content") and response.content:
+                # Type check: response.content should be str for json.loads
+                content_str = (
+                    response.content
+                    if isinstance(response.content, str)
+                    else str(response.content)
+                )
                 try:
                     # Parse the JSON schema from content
-                    schema_content = json.loads(response.content)
+                    schema_content = json.loads(content_str)
                     # Return in the format expected by extract() method
-                    return {
-                        "type": "json_schema",
-                        "json_schema": schema_content
-                    }
+                    return {"type": "json_schema", "json_schema": schema_content}
                 except json.JSONDecodeError:
                     # If content is not valid JSON, try to wrap it
                     return {
                         "type": "json_schema",
                         "json_schema": {
                             "name": "generated_schema",
-                            "schema": json.loads(response.content)
-                        }
+                            "schema": json.loads(content_str),
+                        },
                     }
             raise ValueError("Empty response from schema generation API")
 
-        except (FileNotFoundError, ValueError) as e:
+        except (FileNotFoundError, ValueError):
             raise
         except Exception as e:
             raise Exception(f"Failed to generate schema: {str(e)}") from e
@@ -454,7 +495,8 @@ class UpstageUniversalInformationExtraction(BaseTool):
         """
         if self.api_wrapper is None:
             raise ValueError(
-                "API wrapper not initialized. Tool may not have been properly configured."
+                "API wrapper not initialized. Tool may not have been properly "
+                "configured."
             )
 
         if len(image_urls) > 3:
@@ -462,20 +504,24 @@ class UpstageUniversalInformationExtraction(BaseTool):
 
         try:
             # Convert files to base64
-            contents = [_file_to_base64(url) for url in image_urls]
+            contents: list[dict[str, Any]] = [
+                _file_to_base64(url) for url in image_urls
+            ]
 
             # Prepare messages
-            messages = [HumanMessage(content=contents)]
+            # Type cast: contents is list[dict] which is compatible with
+            # list[str | dict[Any, Any]]
+            messages = [HumanMessage(content=cast(Any, contents))]
 
             # Create ChatUpstage instance for schema generation endpoint
             # Get API key from api_wrapper if upstage_api_key is not set
             api_key = self.upstage_api_key
             if not api_key and self.api_wrapper:
                 api_key = getattr(self.api_wrapper, "upstage_api_key", None)
-            
+
             if not api_key:
                 raise ValueError("API key not available for schema generation")
-            
+
             schema_api_wrapper = ChatUpstage(
                 model=self.model,
                 api_key=api_key,
@@ -487,23 +533,26 @@ class UpstageUniversalInformationExtraction(BaseTool):
 
             # Parse response
             if hasattr(response, "content") and response.content:
+                # Type check: response.content should be str for json.loads
+                content_str = (
+                    response.content
+                    if isinstance(response.content, str)
+                    else str(response.content)
+                )
                 try:
-                    schema_content = json.loads(response.content)
-                    return {
-                        "type": "json_schema",
-                        "json_schema": schema_content
-                    }
+                    schema_content = json.loads(content_str)
+                    return {"type": "json_schema", "json_schema": schema_content}
                 except json.JSONDecodeError:
                     return {
                         "type": "json_schema",
                         "json_schema": {
                             "name": "generated_schema",
-                            "schema": json.loads(response.content)
-                        }
+                            "schema": json.loads(content_str),
+                        },
                     }
             raise ValueError("Empty response from schema generation API")
 
-        except (FileNotFoundError, ValueError) as e:
+        except (FileNotFoundError, ValueError):
             raise
         except Exception as e:
             raise Exception(f"Failed to generate schema: {str(e)}") from e
