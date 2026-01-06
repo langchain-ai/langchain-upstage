@@ -63,8 +63,6 @@ def parse_output(data: dict, output_format: OutputFormat) -> str:
         raise ValueError(f"Invalid output type: {output_format}")
 
 
-
-
 class UpstageDocumentParseParser(BaseBlobParser):
     """Upstage Document Parse Parser.
 

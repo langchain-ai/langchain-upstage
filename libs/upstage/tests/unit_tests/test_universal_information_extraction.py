@@ -23,7 +23,9 @@ class TestUpstageUniversalInformationExtraction:
         """Test that invoke method calls API with correct parameters."""
         # Arrange
         mock_response = Mock()
-        mock_response.content = '{"any": "response", "structure": "doesnt", "matter": true}'
+        mock_response.content = (
+            '{"any": "response", "structure": "doesnt", "matter": true}'
+        )
         mock_instance = Mock()
         mock_instance.invoke.return_value = mock_response
         mock_chat_upstage.return_value = mock_instance

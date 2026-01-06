@@ -31,9 +31,10 @@ def file_to_base64_message(
             directly. For local files, returns base64 encoded data.
 
     Raises:
-        FileNotFoundError: If the file does not exist (URLs are skipped if allow_urls=True).
-        ValueError: If file format is unsupported, file is too large, or URL is not
-            allowed when allow_urls=False.
+        FileNotFoundError: If the file does not exist (URLs are skipped if
+            allow_urls=True).
+        ValueError: If file format is unsupported, file is too large, or URL is
+            not allowed when allow_urls=False.
     """
 
     if file_path.startswith(("http://", "https://")):
@@ -67,4 +68,3 @@ def file_to_base64_message(
         "type": "image_url",
         "image_url": {"url": f"data:application/octet-stream;base64,{base64_data}"},
     }
-

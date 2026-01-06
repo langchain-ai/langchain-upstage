@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 from typing import Any, Literal, Optional, Type
 
@@ -96,15 +95,19 @@ class UpstagePrebuiltInformationExtraction(BaseTool):
         - receipt-extraction: Extract information from receipts
         - air-waybill-extraction: Extract information from air waybills
         - bill-of-lading-and-shipping-request-extraction: Extract from bills of lading
-        - commercial-invoice-and-packing-list-extraction: Extract from invoices and packing lists
-        - kr-export-declaration-certificate-extraction: Extract from Korean export certificates
+        - commercial-invoice-and-packing-list-extraction: Extract from invoices and
+            packing lists
+        - kr-export-declaration-certificate-extraction: Extract from Korean export
+            certificates
 
     To use, you should have the environment variable `UPSTAGE_API_KEY`
     set with your API key or pass it as a named parameter to the constructor.
 
     Args:
-        model: The prebuilt model to use for extraction. Must be one of the available models.
-        api_key: Optional API key. If not provided, will use UPSTAGE_API_KEY environment variable.
+        model: The prebuilt model to use for extraction. Must be one of the
+            available models.
+        api_key: Optional API key. If not provided, will use UPSTAGE_API_KEY
+            environment variable.
 
     Example:
         .. code-block:: python
@@ -186,13 +189,23 @@ class UpstagePrebuiltInformationExtraction(BaseTool):
             _validate_file(filename)
 
             # Get API key
-            api_key = self.upstage_api_key.get_secret_value() if self.upstage_api_key else None
+            api_key = (
+                self.upstage_api_key.get_secret_value()
+                if self.upstage_api_key
+                else None
+            )
             if not api_key:
                 raise ValueError("UPSTAGE_API_KEY must be set or passed")
 
             # Prepare multipart/form-data request
             with open(filename, "rb") as f:
-                files = {"document": (os.path.basename(filename), f, "application/octet-stream")}
+                files = {
+                    "document": (
+                        os.path.basename(filename),
+                        f,
+                        "application/octet-stream",
+                    )
+                }
                 data = {"model": self.model}
 
                 # Make HTTP request
@@ -217,7 +230,10 @@ class UpstagePrebuiltInformationExtraction(BaseTool):
             raise
         except httpx.HTTPStatusError as e:
             # Handle HTTP errors
-            error_msg = f"Failed to extract information from document: {e.response.status_code} - {e.response.text}"
+            error_msg = (
+                f"Failed to extract information from document: "
+                f"{e.response.status_code} - {e.response.text}"
+            )
             if run_manager:
                 run_manager.on_tool_error(Exception(error_msg))
             raise Exception(error_msg) from e
@@ -233,7 +249,8 @@ class UpstagePrebuiltInformationExtraction(BaseTool):
         filename: str,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> dict:
-        """Extract information from a document asynchronously using the prebuilt extraction model.
+        """Extract information from a document asynchronously using the prebuilt
+        extraction model.
 
         Args:
             filename: Path to the document file to extract information from.
@@ -252,13 +269,23 @@ class UpstagePrebuiltInformationExtraction(BaseTool):
             _validate_file(filename)
 
             # Get API key
-            api_key = self.upstage_api_key.get_secret_value() if self.upstage_api_key else None
+            api_key = (
+                self.upstage_api_key.get_secret_value()
+                if self.upstage_api_key
+                else None
+            )
             if not api_key:
                 raise ValueError("UPSTAGE_API_KEY must be set or passed")
 
             # Prepare multipart/form-data request
             with open(filename, "rb") as f:
-                files = {"document": (os.path.basename(filename), f, "application/octet-stream")}
+                files = {
+                    "document": (
+                        os.path.basename(filename),
+                        f,
+                        "application/octet-stream",
+                    )
+                }
                 data = {"model": self.model}
 
                 # Make HTTP request
@@ -266,7 +293,9 @@ class UpstagePrebuiltInformationExtraction(BaseTool):
                     "Authorization": f"Bearer {api_key}",
                 }
 
-                async with httpx.AsyncClient(timeout=180.0) as client:  # 3 minute timeout
+                async with httpx.AsyncClient(
+                    timeout=180.0
+                ) as client:  # 3 minute timeout
                     response = await client.post(
                         PREBUILT_EXTRACT_BASE_URL,
                         headers=headers,
@@ -283,7 +312,10 @@ class UpstagePrebuiltInformationExtraction(BaseTool):
             raise
         except httpx.HTTPStatusError as e:
             # Handle HTTP errors
-            error_msg = f"Failed to extract information from document: {e.response.status_code} - {e.response.text}"
+            error_msg = (
+                f"Failed to extract information from document: "
+                f"{e.response.status_code} - {e.response.text}"
+            )
             if run_manager:
                 await run_manager.on_tool_error(Exception(error_msg))
             raise Exception(error_msg) from e
