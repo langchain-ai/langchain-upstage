@@ -147,6 +147,9 @@ class UpstagePrebuiltInformationExtraction(BaseTool):
     ) -> None:
         upstage_api_key = kwargs.get("upstage_api_key", None)
         if not upstage_api_key:
+            # api_key is an explicit parameter, not in kwargs
+            upstage_api_key = api_key
+        if not upstage_api_key:
             upstage_api_key = kwargs.get("api_key", None)
         if not upstage_api_key:
             upstage_api_key = SecretStr(os.getenv("UPSTAGE_API_KEY", ""))
@@ -164,6 +167,8 @@ class UpstagePrebuiltInformationExtraction(BaseTool):
             upstage_api_key=upstage_api_key,
             **kwargs,
         )
+        # Ensure upstage_api_key is set (BaseTool might not preserve it)
+        self.upstage_api_key = upstage_api_key
 
     def _run(
         self,

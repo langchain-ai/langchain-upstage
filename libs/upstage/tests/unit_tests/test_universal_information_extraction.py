@@ -16,9 +16,8 @@ class TestUpstageUniversalInformationExtraction:
         with pytest.raises(ValueError):
             UpstageUniversalInformationExtraction()
 
-    @patch("langchain_upstage.tools.universal_information_extraction.ChatUpstage")
     def test_invoke_calls_api_with_correct_parameters(
-        self, mock_chat_upstage: Mock
+        self, mock_api_key: str
     ) -> None:
         """Test that invoke method calls API with correct parameters."""
         # Arrange
@@ -28,9 +27,11 @@ class TestUpstageUniversalInformationExtraction:
         )
         mock_instance = Mock()
         mock_instance.invoke.return_value = mock_response
-        mock_chat_upstage.return_value = mock_instance
 
-        tool = UpstageUniversalInformationExtraction()
+        tool = UpstageUniversalInformationExtraction(api_key=mock_api_key)
+        # Set api_wrapper directly to avoid ChatUpstage model_validator issues
+        tool.api_wrapper = mock_instance
+
         image_urls = ["https://example.com/invoice.png"]
         response_format = {
             "type": "json_schema",
@@ -49,9 +50,8 @@ class TestUpstageUniversalInformationExtraction:
         assert result == {"any": "response", "structure": "doesnt", "matter": True}
         mock_instance.invoke.assert_called_once()
 
-    @patch("langchain_upstage.tools.universal_information_extraction.ChatUpstage")
     def test_invoke_with_custom_parameters_calls_api_correctly(
-        self, mock_chat_upstage: Mock
+        self, mock_api_key: str
     ) -> None:
         """Test that invoke method calls API for custom configuration."""
         # Arrange
@@ -59,9 +59,10 @@ class TestUpstageUniversalInformationExtraction:
         mock_response.content = '{"response": "data"}'
         mock_instance = Mock()
         mock_instance.invoke.return_value = mock_response
-        mock_chat_upstage.return_value = mock_instance
 
-        tool = UpstageUniversalInformationExtraction()
+        tool = UpstageUniversalInformationExtraction(api_key=mock_api_key)
+        # Set api_wrapper directly to avoid ChatUpstage model_validator issues
+        tool.api_wrapper = mock_instance
 
         # Act
         tool.invoke(
@@ -89,9 +90,8 @@ class TestUpstageUniversalInformationExtraction:
         assert extra_body["doc_split"] is True
         assert extra_body["location"] is True
 
-    @patch("langchain_upstage.tools.universal_information_extraction.ChatUpstage")
     def test_invoke_with_default_parameters_calls_api_correctly(
-        self, mock_chat_upstage: Mock
+        self, mock_api_key: str
     ) -> None:
         """Test that invoke method calls API for default configuration."""
         # Arrange
@@ -99,9 +99,10 @@ class TestUpstageUniversalInformationExtraction:
         mock_response.content = '{"response": "data"}'
         mock_instance = Mock()
         mock_instance.invoke.return_value = mock_response
-        mock_chat_upstage.return_value = mock_instance
 
-        tool = UpstageUniversalInformationExtraction()
+        tool = UpstageUniversalInformationExtraction(api_key=mock_api_key)
+        # Set api_wrapper directly to avoid ChatUpstage model_validator issues
+        tool.api_wrapper = mock_instance
 
         # Act
         tool.invoke(
@@ -130,16 +131,16 @@ class TestUpstageUniversalInformationExtraction:
         assert extra_body["doc_split"] is False
         assert extra_body["location"] is False
 
-    @patch("langchain_upstage.tools.universal_information_extraction.ChatUpstage")
-    def test_invoke_propagates_api_errors(self, mock_chat_upstage: Mock) -> None:
+    def test_invoke_propagates_api_errors(self, mock_api_key: str) -> None:
         """Test that invoke method properly propagates API errors."""
         # Arrange
         api_error = Exception("API service unavailable")
         mock_instance = Mock()
         mock_instance.invoke.side_effect = api_error
-        mock_chat_upstage.return_value = mock_instance
 
-        tool = UpstageUniversalInformationExtraction()
+        tool = UpstageUniversalInformationExtraction(api_key=mock_api_key)
+        # Set api_wrapper directly to avoid ChatUpstage model_validator issues
+        tool.api_wrapper = mock_instance
 
         # Act & Assert
         with pytest.raises(Exception) as exc_info:
