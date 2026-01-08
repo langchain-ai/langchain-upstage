@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -16,9 +16,7 @@ class TestUpstageUniversalInformationExtraction:
         with pytest.raises(ValueError):
             UpstageUniversalInformationExtraction()
 
-    def test_invoke_calls_api_with_correct_parameters(
-        self, mock_api_key: str
-    ) -> None:
+    def test_invoke_calls_api_with_correct_parameters(self, mock_api_key: str) -> None:
         """Test that invoke method calls API with correct parameters."""
         # Arrange
         mock_response = Mock()

@@ -74,9 +74,7 @@ class TestUpstagePrebuiltInformationExtraction:
         with pytest.raises(ValueError):
             tool.invoke({"filename": str(unsupported_file)})
 
-    def test_invoke_with_nonexistent_file_raises_error(
-        self, mock_api_key: str
-    ) -> None:
+    def test_invoke_with_nonexistent_file_raises_error(self, mock_api_key: str) -> None:
         """Test that invoke method raises error for nonexistent files."""
         # Arrange
         tool = UpstagePrebuiltInformationExtraction(
