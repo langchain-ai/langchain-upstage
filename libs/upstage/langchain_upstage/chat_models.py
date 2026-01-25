@@ -28,8 +28,9 @@ from typing_extensions import Self
 
 from langchain_upstage.document_parse import UpstageDocumentParseLoader
 
-DOC_PARSING_MODEL = ["solar-pro2"]
+DOC_PARSING_MODEL = ["solar-pro2", "solar-pro3"]
 SOLAR_TOKENIZERS = {
+    "solar-pro3": "upstage/solar-pro3-tokenizer",
     "solar-pro2": "upstage/solar-pro2-tokenizer",
     "solar-mini": "upstage/solar-1-mini-tokenizer",
 }
@@ -128,6 +129,12 @@ class ChatUpstage(BaseChatOpenAI):
     
     Solar tokenizer is opened in huggingface https://huggingface.co/upstage/solar-pro-tokenizer
     """
+
+    top_k: Optional[int] = Field(default=None)
+    """An optional parameter to limit sampling to the top K most likely tokens at each step. Lower values like 50 make the output more focused, while higher values allow more variety."""
+
+    prompt_cache_key: Optional[str] = Field(default=None)
+    """An optional parameter that specifies a unique key for identifying and caching the prompt. Use a distinct key for each conversational context to improve cache utilization."""
 
     default_headers: Union[Mapping[str, str], None] = DEFAULT_HEADERS
     """Add trace headers."""
