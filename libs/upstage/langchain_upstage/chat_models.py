@@ -131,10 +131,10 @@ class ChatUpstage(BaseChatOpenAI):
     """
 
     top_k: Optional[int] = Field(default=None)
-    """An optional parameter to limit sampling to the top K most likely tokens at each step. Lower values like 50 make the output more focused, while higher values allow more variety."""
+    """Limit sampling to the top K most likely tokens. Lower values are more focused."""
 
     prompt_cache_key: Optional[str] = Field(default=None)
-    """An optional parameter that specifies a unique key for identifying and caching the prompt. Use a distinct key for each conversational context to improve cache utilization."""
+    """Unique key for prompt caching. Use distinct keys per conversational context."""
 
     default_headers: Union[Mapping[str, str], None] = DEFAULT_HEADERS
     """Add trace headers."""
