@@ -9,6 +9,9 @@ on:
         required: true
         default: 'libs/upstage'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
