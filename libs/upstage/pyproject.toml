@@ -16,7 +16,10 @@ pypdf = ">=4.2.0,<7.0.0"
 requests = "^2.31.0"
 tokenizers = "^0.20.0"
 langchain-openai = "^1.0.2"
-langchain-core = "^1.0.3"
+langchain-core = "^1.2.5"
+# CVE-2025-66418, CVE-2025-66471, CVE-2026-21441: urllib3 < 2.6.3 has multiple high-severity vulnerabilities.
+# urllib3 is transitive (via requests). Remove this floor once requests pulls in >= 2.6.3 directly.
+urllib3 = ">=2.6.3,<3"
 
 [tool.poetry.group.test]
 optional = true
@@ -32,7 +35,7 @@ syrupy = "^4.0.2"
 pytest-watcher = "^0.3.4"
 pytest-asyncio = "^0.21.1"
 docarray = "^0.32.1"
-langchain-tests = "1.0.1"
+langchain-tests = "^1.1.0"
 
 [tool.poetry.group.codespell]
 optional = true
@@ -52,7 +55,7 @@ types-requests = ">=2.31.0"
 
 [tool.poetry.group.test_integration.dependencies]
 httpx = "^0.28.1"
-pillow = "^10.3.0"
+pillow = "^12.1.1"
 numpy = "^2.1.0"
 
 
