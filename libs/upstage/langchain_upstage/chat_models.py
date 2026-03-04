@@ -242,17 +242,17 @@ class ChatUpstage(BaseChatOpenAI):
         if choices and hasattr(choices[0].message, "reasoning_content"):
             reasoning_content = choices[0].message.reasoning_content
             if reasoning_content is not None:
-                rtn.generations[0].message.additional_kwargs[
-                    "reasoning_content"
-                ] = reasoning_content
+                rtn.generations[0].message.additional_kwargs["reasoning_content"] = (
+                    reasoning_content
+                )
         elif choices and hasattr(choices[0].message, "model_extra"):
             model_extra = choices[0].message.model_extra
             if isinstance(model_extra, dict) and (
                 reasoning := model_extra.get("reasoning")
             ):
-                rtn.generations[0].message.additional_kwargs[
-                    "reasoning_content"
-                ] = reasoning
+                rtn.generations[0].message.additional_kwargs["reasoning_content"] = (
+                    reasoning
+                )
 
         return rtn
 
@@ -271,19 +271,15 @@ class ChatUpstage(BaseChatOpenAI):
             top = choices[0]
             if isinstance(generation_chunk.message, AIMessageChunk):
                 if (
-                    reasoning_content := top.get("delta", {}).get(
-                        "reasoning_content"
+                    reasoning_content := top.get("delta", {}).get("reasoning_content")
+                ) is not None:
+                    generation_chunk.message.additional_kwargs["reasoning_content"] = (
+                        reasoning_content
                     )
-                ) is not None:
-                    generation_chunk.message.additional_kwargs[
-                        "reasoning_content"
-                    ] = reasoning_content
-                elif (
-                    reasoning := top.get("delta", {}).get("reasoning")
-                ) is not None:
-                    generation_chunk.message.additional_kwargs[
-                        "reasoning_content"
-                    ] = reasoning
+                elif (reasoning := top.get("delta", {}).get("reasoning")) is not None:
+                    generation_chunk.message.additional_kwargs["reasoning_content"] = (
+                        reasoning
+                    )
 
         return generation_chunk
 

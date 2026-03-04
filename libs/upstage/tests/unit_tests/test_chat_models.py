@@ -644,7 +644,10 @@ def test_reasoning_content_non_streaming() -> None:
         "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
     }
     mock_response = _make_mock_response(
-        {"reasoning_content": "Let me think step by step...", "content": "The answer is 42."},
+        {
+            "reasoning_content": "Let me think step by step...",
+            "content": "The answer is 42.",
+        },
         response_dict,
     )
 
@@ -670,7 +673,10 @@ def test_reasoning_content_none_not_stored() -> None:
         "choices": [
             {
                 "index": 0,
-                "message": {"role": "assistant", "content": "Response without reasoning."},
+                "message": {
+                    "role": "assistant",
+                    "content": "Response without reasoning.",
+                },
                 "finish_reason": "stop",
             }
         ],
@@ -706,7 +712,9 @@ def test_reasoning_content_model_extra_fallback() -> None:
         "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
     }
 
-    mock_message = MagicMock(spec=["content", "role", "function_call", "tool_calls", "audio", "model_extra"])
+    mock_message = MagicMock(
+        spec=["content", "role", "function_call", "tool_calls", "audio", "model_extra"]
+    )
     mock_message.content = "The answer."
     mock_message.role = "assistant"
     mock_message.function_call = None
@@ -735,7 +743,6 @@ def test_reasoning_content_model_extra_fallback() -> None:
 def test_reasoning_content_streaming() -> None:
     """Test that reasoning_content is extracted from streaming chunks."""
     from langchain_core.messages import AIMessageChunk
-    from langchain_core.outputs import ChatGenerationChunk
 
     llm = ChatUpstage()
 
@@ -755,15 +762,10 @@ def test_reasoning_content_streaming() -> None:
         ],
     }
 
-    result = llm._convert_chunk_to_generation_chunk(
-        chunk, AIMessageChunk, None
-    )
+    result = llm._convert_chunk_to_generation_chunk(chunk, AIMessageChunk, None)
 
     assert result is not None
-    assert (
-        result.message.additional_kwargs["reasoning_content"]
-        == "thinking step 1"
-    )
+    assert result.message.additional_kwargs["reasoning_content"] == "thinking step 1"
 
 
 def test_reasoning_content_streaming_openrouter() -> None:
@@ -788,12 +790,9 @@ def test_reasoning_content_streaming_openrouter() -> None:
         ],
     }
 
-    result = llm._convert_chunk_to_generation_chunk(
-        chunk, AIMessageChunk, None
-    )
+    result = llm._convert_chunk_to_generation_chunk(chunk, AIMessageChunk, None)
 
     assert result is not None
     assert (
-        result.message.additional_kwargs["reasoning_content"]
-        == "openrouter thinking"
+        result.message.additional_kwargs["reasoning_content"] == "openrouter thinking"
     )
