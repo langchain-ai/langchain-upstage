@@ -605,3 +605,194 @@ def test_chat_upstage_extra_kwargs_duplicate_error() -> None:
     # Using **kwargs to avoid type checker issues while testing runtime behavior
     with pytest.raises(ValueError):
         ChatUpstage(model_kwargs={"foo": 2}, **{"foo": 3})  # type: ignore[arg-type]
+
+
+def _make_mock_response(message_attrs: dict, response_dict: dict) -> MagicMock:
+    """Helper to create a mock openai.BaseModel response for _create_chat_result."""
+    mock_message = MagicMock()
+    for k, v in message_attrs.items():
+        setattr(mock_message, k, v)
+
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_choice.index = 0
+    mock_choice.finish_reason = "stop"
+    mock_choice.logprobs = None
+
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+    mock_response.model_dump.return_value = response_dict
+    return mock_response
+
+
+def test_reasoning_content_non_streaming() -> None:
+    """Test that reasoning_content is extracted from non-streaming responses."""
+    import openai
+
+    llm = ChatUpstage()
+
+    response_dict = {
+        "id": "chatcmpl-test",
+        "model": "solar-mini",
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": "The answer is 42."},
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
+    }
+    mock_response = _make_mock_response(
+        {
+            "reasoning_content": "Let me think step by step...",
+            "content": "The answer is 42.",
+        },
+        response_dict,
+    )
+
+    with patch.object(openai, "BaseModel", type(mock_response)):
+        result = llm._create_chat_result(mock_response)
+
+    assert result.generations[0].message.content == "The answer is 42."
+    assert (
+        result.generations[0].message.additional_kwargs["reasoning_content"]
+        == "Let me think step by step..."
+    )
+
+
+def test_reasoning_content_none_not_stored() -> None:
+    """Test that None reasoning_content is not stored in additional_kwargs."""
+    import openai
+
+    llm = ChatUpstage()
+
+    response_dict = {
+        "id": "chatcmpl-test",
+        "model": "solar-mini",
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": "Response without reasoning.",
+                },
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
+    }
+    mock_response = _make_mock_response(
+        {"reasoning_content": None, "content": "Response without reasoning."},
+        response_dict,
+    )
+
+    with patch.object(openai, "BaseModel", type(mock_response)):
+        result = llm._create_chat_result(mock_response)
+
+    assert "reasoning_content" not in result.generations[0].message.additional_kwargs
+
+
+def test_reasoning_content_model_extra_fallback() -> None:
+    """Test reasoning_content extraction from model_extra (OpenRouter format)."""
+    import openai
+
+    llm = ChatUpstage()
+
+    response_dict = {
+        "id": "chatcmpl-test",
+        "model": "solar-mini",
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": "The answer."},
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
+    }
+
+    mock_message = MagicMock(
+        spec=["content", "role", "function_call", "tool_calls", "audio", "model_extra"]
+    )
+    mock_message.content = "The answer."
+    mock_message.role = "assistant"
+    mock_message.function_call = None
+    mock_message.tool_calls = None
+    mock_message.audio = None
+    mock_message.model_extra = {"reasoning": "OpenRouter reasoning text"}
+
+    mock_response = MagicMock()
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    mock_choice.index = 0
+    mock_choice.finish_reason = "stop"
+    mock_choice.logprobs = None
+    mock_response.choices = [mock_choice]
+    mock_response.model_dump.return_value = response_dict
+
+    with patch.object(openai, "BaseModel", type(mock_response)):
+        result = llm._create_chat_result(mock_response)
+
+    assert (
+        result.generations[0].message.additional_kwargs["reasoning_content"]
+        == "OpenRouter reasoning text"
+    )
+
+
+def test_reasoning_content_streaming() -> None:
+    """Test that reasoning_content is extracted from streaming chunks."""
+    from langchain_core.messages import AIMessageChunk
+
+    llm = ChatUpstage()
+
+    chunk = {
+        "id": "chatcmpl-test",
+        "model": "solar-mini",
+        "choices": [
+            {
+                "index": 0,
+                "delta": {
+                    "role": "assistant",
+                    "content": "partial",
+                    "reasoning_content": "thinking step 1",
+                },
+                "finish_reason": None,
+            }
+        ],
+    }
+
+    result = llm._convert_chunk_to_generation_chunk(chunk, AIMessageChunk, None)
+
+    assert result is not None
+    assert result.message.additional_kwargs["reasoning_content"] == "thinking step 1"
+
+
+def test_reasoning_content_streaming_openrouter() -> None:
+    """Test that reasoning field (OpenRouter) is extracted from streaming chunks."""
+    from langchain_core.messages import AIMessageChunk
+
+    llm = ChatUpstage()
+
+    chunk = {
+        "id": "chatcmpl-test",
+        "model": "solar-mini",
+        "choices": [
+            {
+                "index": 0,
+                "delta": {
+                    "role": "assistant",
+                    "content": "partial",
+                    "reasoning": "openrouter thinking",
+                },
+                "finish_reason": None,
+            }
+        ],
+    }
+
+    result = llm._convert_chunk_to_generation_chunk(chunk, AIMessageChunk, None)
+
+    assert result is not None
+    assert (
+        result.message.additional_kwargs["reasoning_content"] == "openrouter thinking"
+    )

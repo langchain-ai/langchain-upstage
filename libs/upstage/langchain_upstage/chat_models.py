@@ -17,9 +17,9 @@ from langchain_core.callbacks import (
     CallbackManagerForLLMRun,
 )
 from langchain_core.language_models.chat_models import LangSmithParams
-from langchain_core.messages import BaseMessage, HumanMessage
+from langchain_core.messages import AIMessageChunk, BaseMessage, HumanMessage
 from langchain_core.messages.utils import convert_to_openai_messages
-from langchain_core.outputs import ChatResult
+from langchain_core.outputs import ChatGenerationChunk, ChatResult
 from langchain_core.utils import from_env, secret_from_env
 from langchain_openai.chat_models.base import BaseChatOpenAI
 from pydantic import Field, SecretStr, model_validator
@@ -227,6 +227,61 @@ class ChatUpstage(BaseChatOpenAI):
         # every reply is primed with <|im_start|>assistant
         num_tokens += tokens_suffix
         return num_tokens
+
+    def _create_chat_result(
+        self,
+        response: Union[dict, openai.BaseModel],
+        generation_info: Optional[dict] = None,
+    ) -> ChatResult:
+        rtn = super()._create_chat_result(response, generation_info)
+
+        if not isinstance(response, openai.BaseModel):
+            return rtn
+
+        choices = getattr(response, "choices", None)
+        if choices and hasattr(choices[0].message, "reasoning_content"):
+            reasoning_content = choices[0].message.reasoning_content
+            if reasoning_content is not None:
+                rtn.generations[0].message.additional_kwargs["reasoning_content"] = (
+                    reasoning_content
+                )
+        elif choices and hasattr(choices[0].message, "model_extra"):
+            model_extra = choices[0].message.model_extra
+            if isinstance(model_extra, dict) and (
+                reasoning := model_extra.get("reasoning")
+            ):
+                rtn.generations[0].message.additional_kwargs["reasoning_content"] = (
+                    reasoning
+                )
+
+        return rtn
+
+    def _convert_chunk_to_generation_chunk(
+        self,
+        chunk: dict,
+        default_chunk_class: type,
+        base_generation_info: Optional[dict],
+    ) -> Optional[ChatGenerationChunk]:
+        generation_chunk = super()._convert_chunk_to_generation_chunk(
+            chunk,
+            default_chunk_class,
+            base_generation_info,
+        )
+        if (choices := chunk.get("choices")) and generation_chunk:
+            top = choices[0]
+            if isinstance(generation_chunk.message, AIMessageChunk):
+                if (
+                    reasoning_content := top.get("delta", {}).get("reasoning_content")
+                ) is not None:
+                    generation_chunk.message.additional_kwargs["reasoning_content"] = (
+                        reasoning_content
+                    )
+                elif (reasoning := top.get("delta", {}).get("reasoning")) is not None:
+                    generation_chunk.message.additional_kwargs["reasoning_content"] = (
+                        reasoning
+                    )
+
+        return generation_chunk
 
     def _generate(
         self,
