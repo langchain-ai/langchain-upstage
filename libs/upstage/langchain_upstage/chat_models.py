@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from typing import (
     Any,
+    Callable,
     Dict,
     List,
     Mapping,
@@ -20,6 +21,7 @@ from langchain_core.language_models.chat_models import LangSmithParams
 from langchain_core.messages import AIMessageChunk, BaseMessage, HumanMessage
 from langchain_core.messages.utils import convert_to_openai_messages
 from langchain_core.outputs import ChatGenerationChunk, ChatResult
+from langchain_core.tools import BaseTool
 from langchain_core.utils import from_env, secret_from_env
 from langchain_openai.chat_models.base import BaseChatOpenAI
 from pydantic import Field, SecretStr, model_validator
@@ -203,7 +205,12 @@ class ChatUpstage(BaseChatOpenAI):
         return encode.ids
 
     def get_num_tokens_from_messages(
-        self, messages: Sequence[BaseMessage], tools: Sequence[Any] | None = None
+        self,
+        messages: Sequence[BaseMessage],
+        tools: Sequence[dict[str, Any] | type | Callable[..., Any] | BaseTool]
+        | None = None,
+        *,
+        allow_fetching_images: bool = False,
     ) -> int:
         """Calculate num tokens for solar model."""
         tokenizer = self._get_tokenizer()
