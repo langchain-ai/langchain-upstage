@@ -12,6 +12,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
+fsspec = ">=2026.6.0"
 pypdf = ">=4.2.0,<7.0.0"
 requests = "^2.31.0"
 tokenizers = ">=0.21.0,<1.0.0"
