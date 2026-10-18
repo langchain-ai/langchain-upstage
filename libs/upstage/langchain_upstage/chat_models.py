@@ -196,6 +196,11 @@ class ChatUpstage(BaseChatOpenAI):
 
     def _get_tokenizer(self) -> Tokenizer:
         self.tokenizer_name = SOLAR_TOKENIZERS.get(self.model_name, self.tokenizer_name)
+        if self.tokenizer_name is None:
+            raise ValueError(
+                f"No tokenizer found for model '{self.model_name}'. "
+                "Please set `tokenizer_name`."
+            )
         return Tokenizer.from_pretrained(self.tokenizer_name)
 
     def get_token_ids(self, text: str) -> List[int]:
