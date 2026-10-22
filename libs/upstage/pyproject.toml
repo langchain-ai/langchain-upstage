@@ -16,8 +16,8 @@ fsspec = ">=2026.6.0"
 pypdf = ">=4.2.0"
 requests = ">=2.31.0"
 tokenizers = ">=0.20.0"
-langchain-openai = ">=1.0.2"
-langchain-core = ">=1.2.5"
+langchain-openai = "^1.0.2"
+langchain-core = "^1.2.5"
 # CVE-2025-66418, CVE-2025-66471, CVE-2026-21441: urllib3 < 2.6.3 has multiple high-severity vulnerabilities.
 # urllib3 is transitive (via requests). Remove this floor once requests pulls in >= 2.6.3 directly.
 urllib3 = ">=2.6.3"
