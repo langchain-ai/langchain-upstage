@@ -11,6 +11,7 @@ from langchain_upstage.document_parse_parsers import (
     DOCUMENT_PARSE_DEFAULT_MODEL,
     OCR,
     Category,
+    Mode,
     OutputFormat,
     SplitType,
     UpstageDocumentParseParser,
@@ -52,6 +53,10 @@ class UpstageDocumentParseLoader(BaseLoader):
         loader = UpstageDocumentParseLoader(
             file_path, split="page", output_format="text"
         )
+
+        # Complex tables, charts or rotated scans: use the enhanced mode, or let
+        # the API choose per page with mode="auto".
+        loader = UpstageDocumentParseLoader(file_path, mode="enhanced")
         ```
     """
 
@@ -67,6 +72,8 @@ class UpstageDocumentParseLoader(BaseLoader):
         output_format: OutputFormat = "html",
         coordinates: bool = True,
         base64_encoding: Optional[List[Category]] = None,
+        mode: Optional[Mode] = None,
+        merge_multipage_tables: bool = False,
     ):
         """
         Initializes an instance of the Upstage document parse loader.
@@ -92,6 +99,18 @@ class UpstageDocumentParseLoader(BaseLoader):
                 OCR in the output.
             base64_encoding (List[Category], optional): The category of the elements to
                 be encoded in base64.
+            mode (Mode, optional): The parsing mode: `'standard'`, `'enhanced'` or
+                `'auto'`.
+
+                Use `'enhanced'` for documents with complex tables, charts, images
+                or rotated scans, and `'auto'` to let the API choose `standard` or
+                `enhanced` for each page. Defaults to None (the API default,
+                `'standard'`). `'enhanced'` and `'auto'` require
+                `document-parse-260128` or a later model.
+            merge_multipage_tables (bool, optional): Whether to merge tables that
+                span several pages into one table. When enabled, PDFs are sent in
+                chunks of up to 100 pages so tables can be merged across pages.
+                Defaults to False.
         """
         self.file_path = file_path
         self.split = split
@@ -108,15 +127,20 @@ class UpstageDocumentParseLoader(BaseLoader):
         self.output_format = output_format
         self.coordinates = coordinates
         self.base64_encoding = base64_encoding if base64_encoding is not None else []
+        self.mode = mode
+        self.merge_multipage_tables = merge_multipage_tables
         self.parser = UpstageDocumentParseParser(
             api_key=self.api_key,
             base_url=self.base_url,
             model=self.model,
             split=self.split,
+            chart_recognition=self.chart_recognition,
             ocr=self.ocr,
             output_format=self.output_format,
             coordinates=self.coordinates,
             base64_encoding=self.base64_encoding,
+            mode=self.mode,
+            merge_multipage_tables=self.merge_multipage_tables,
         )
 
         validate_file_path(self.file_path)
