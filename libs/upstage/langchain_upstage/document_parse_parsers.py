@@ -2,7 +2,7 @@ import io
 import json
 import logging
 import os
-from typing import Any, Dict, Iterator, List, Literal, Optional
+from typing import Any, Dict, Iterator, List, Literal, Optional, get_args
 
 from langchain_core.document_loaders import BaseBlobParser, Blob
 from langchain_core.documents import Document
@@ -17,10 +17,13 @@ logger.setLevel(logging.ERROR)
 
 DOCUMENT_PARSE_BASE_URL = "https://api.upstage.ai/v1/document-digitization"
 DEFAULT_NUM_PAGES = 10
+# Maximum number of pages the synchronous Document Parse API accepts per request.
+MAX_SYNC_NUM_PAGES = 100
 DOCUMENT_PARSE_DEFAULT_MODEL = "document-parse"
 
 OutputFormat = Literal["text", "html", "markdown"]
 OCR = Literal["auto", "force"]
+Mode = Literal["standard", "enhanced", "auto"]
 SplitType = Literal["none", "page", "element"]
 Category = Literal[
     "table",
@@ -88,6 +91,8 @@ class UpstageDocumentParseParser(BaseBlobParser):
         output_format: OutputFormat = "html",
         coordinates: bool = True,
         base64_encoding: Optional[List[Category]] = None,
+        mode: Optional[Mode] = None,
+        merge_multipage_tables: bool = False,
     ):
         """
         Initializes an instance of the Upstage class.
@@ -110,7 +115,24 @@ class UpstageDocumentParseParser(BaseBlobParser):
                 OCR in the output.
             base64_encoding (List[Category], optional): The category of the elements to
                 be encoded in base64.
+            mode (Mode, optional): The parsing mode. `"standard"` is suited to
+                text-focused documents with simple tables, `"enhanced"` to documents
+                with complex tables, charts, images or rotated scans, and `"auto"`
+                lets the API pick `standard` or `enhanced` per page. Defaults to
+                None, in which case the API default (`"standard"`) is used.
+                `"enhanced"` and `"auto"` require `document-parse-260128` or a later
+                model.
+            merge_multipage_tables (bool, optional): Whether to merge tables that
+                span several pages into a single table. Tables can only be merged
+                within one request, so when this is enabled PDFs are sent in chunks
+                of up to 100 pages (the synchronous API limit) instead of the default
+                chunk size. Defaults to False.
         """
+        if mode is not None and mode not in get_args(Mode):
+            raise ValueError(
+                f"Invalid mode: {mode!r}. Expected one of {get_args(Mode)} or None."
+            )
+
         self.api_key = get_from_param_or_env(
             "UPSTAGE_API_KEY",
             api_key,
@@ -125,6 +147,8 @@ class UpstageDocumentParseParser(BaseBlobParser):
         self.output_format = output_format
         self.coordinates = coordinates
         self.base64_encoding = base64_encoding if base64_encoding is not None else []
+        self.mode = mode
+        self.merge_multipage_tables = merge_multipage_tables
 
     def _get_headers(self) -> Dict[str, str]:
         """Get headers for API requests with `x-upstage-client` always set to
@@ -151,20 +175,28 @@ class UpstageDocumentParseParser(BaseBlobParser):
         Raises:
             ValueError: If there is an error in the API call.
         """
+        data: Dict[str, Any] = {
+            "model": self.model,
+            "chart_recognition": self.chart_recognition,
+            "ocr": self.ocr,
+            "output_formats": f"['{self.output_format}']",
+            "coordinates": self.coordinates,
+            "base64_encoding": json.dumps(self.base64_encoding),
+        }
+        # Only send the newer options when they are set, so requests that do not
+        # use them stay identical for older pinned model versions.
+        if self.mode is not None:
+            data["mode"] = self.mode
+        if self.merge_multipage_tables:
+            data["merge_multipage_tables"] = True
+
         response = make_request(
             "POST",
             self.base_url,
             self.api_key,
             headers=self._get_headers(),
             files=files,
-            data={
-                "model": self.model,
-                "chart_recognition": self.chart_recognition,
-                "ocr": self.ocr,
-                "output_formats": f"['{self.output_format}']",
-                "coordinates": self.coordinates,
-                "base64_encoding": json.dumps(self.base64_encoding),
-            },
+            data=data,
         )
 
         return response.get("elements", [])
@@ -298,7 +330,11 @@ class UpstageDocumentParseParser(BaseBlobParser):
             ValueError: If an invalid split type is provided.
         """
 
-        if is_batch:
+        if self.merge_multipage_tables:
+            # Tables are only merged within a single request, so send as many pages
+            # per request as the synchronous API allows.
+            num_pages = MAX_SYNC_NUM_PAGES
+        elif is_batch:
             num_pages = DEFAULT_NUM_PAGES
         else:
             num_pages = 1
@@ -320,7 +356,7 @@ class UpstageDocumentParseParser(BaseBlobParser):
 
             if is_pdf:
                 start_page = 0
-                num_pages = DEFAULT_NUM_PAGES
+                num_pages = max(num_pages, DEFAULT_NUM_PAGES)
                 for _ in range(number_of_pages):
                     if start_page >= number_of_pages:
                         break

@@ -43,4 +43,14 @@ for doc in docs[:3]:
     print(doc)
 ```
 
+### Parsing mode
+
+Document Parse has three [modes](https://console.upstage.ai/docs/capabilities/digitize/document-parsing): `standard` for text-focused documents with simple tables, `enhanced` for complex tables, charts, images and rotated scans, and `auto`, which picks `standard` or `enhanced` for each page. If `mode` is not set, the API default (`standard`) is used. `enhanced` and `auto` need `document-parse-260128` or a later model (the default `document-parse` alias already points to one).
+
+```python
+loader = UpstageDocumentParseLoader(file_path, mode="enhanced")  # or mode="auto"
+```
+
+Set `merge_multipage_tables=True` to merge tables that continue across pages into one table. Tables can only be merged within a single request, so with this option PDFs are sent in chunks of up to 100 pages (the synchronous API limit) instead of the default chunk size.
+
 If you are a Windows user, please ensure that the [Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170) is installed before using the loader.
